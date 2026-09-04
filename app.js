@@ -43,8 +43,11 @@ function ensureAuthUi() {
   const button = document.createElement('button');
   button.id = 'dgslAuthButton';
   button.type = 'button';
-  button.textContent = 'Log in';
+  button.textContent = 'Login';
   button.style.marginLeft = '8px';
+  button.style.background = '#008e39';
+  button.style.color = '#fff';
+  button.style.borderColor = '#008e39';
 
   button.onclick = async () => {
     if (currentUser) {
@@ -66,7 +69,7 @@ function ensureAuthUi() {
 
 function updateAuthUi() {
   const button = document.getElementById('dgslAuthButton');
-  if (button) button.textContent = currentUser ? 'Log out' : 'Log in';
+  if (button) button.textContent = currentUser ? 'Logout' : 'Login';
 
   const newButton = document.getElementById('newZone');
   if (newButton) newButton.style.display = currentUser ? '' : 'none';
@@ -105,7 +108,7 @@ function showAuthDialog() {
         <div id="dgslAuthStatus" style="min-height:20px;margin-bottom:12px;font-size:14px;"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
           <button type="button" id="dgslLoginCancel">Cancel</button>
-          <button type="button" id="dgslLoginSubmit">Log in</button>
+          <button type="button" id="dgslLoginSubmit" style="background:#008e39;color:#fff;border-color:#008e39;">Login</button>
         </div>
       </div>
     `;
@@ -674,16 +677,6 @@ function render() {
               data-view="${esc(x.id)}"
             >
               View
-            </button>
-
-          </td>
-
-          <td>
-  <button
-              type="button"
-              data-edit="${esc(x.id)}"
-            >
-              Edit
             </button>
 
           </td>
