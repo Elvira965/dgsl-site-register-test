@@ -85,6 +85,17 @@ function updateAuthUi() {
   if (deleteButton && !currentUser) {
     deleteButton.style.display = 'none';
   }
+
+  const exportButton = document.getElementById('export');
+  if (exportButton) {
+    exportButton.style.display = currentUser ? '' : 'none';
+  }
+
+  const importButton = document.getElementById('import');
+  const importLabel = importButton?.closest('label.button');
+  if (importLabel) {
+    importLabel.style.display = currentUser ? '' : 'none';
+  }
 }
 
 function showAuthDialog() {
