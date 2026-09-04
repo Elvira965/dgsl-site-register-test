@@ -509,7 +509,7 @@ function render() {
       .map(
         x => `
 
-        <tr>
+        <tr data-row-id="${esc(x.id)}">
 
           <td>
             <b>
@@ -767,6 +767,110 @@ document
 
       }
     );
+
+
+  // Make the whole handover row clickable.
+  document
+    .querySelectorAll('[data-row-id]')
+    .forEach(
+      row => {
+
+        row.style.cursor = 'pointer';
+
+        row.onclick =
+          function (event) {
+
+            // Keep the existing View/Edit buttons working normally.
+            if (event.target.closest('button, a, input, select, textarea')) {
+              return;
+            }
+
+            const id =
+              this.getAttribute('data-row-id');
+
+            showRowActionDialog(id);
+
+          };
+
+      }
+    );
+
+}
+
+
+// ============================================================
+// WHOLE-ROW ACTION POPUP
+// ============================================================
+
+function showRowActionDialog(id) {
+
+  const record =
+    records.find(
+      x => String(x.id) === String(id)
+    );
+
+  if (!record) return;
+
+  let dialog =
+    document.getElementById('rowActionDialog');
+
+  if (!dialog) {
+
+    dialog =
+      document.createElement('dialog');
+
+    dialog.id =
+      'rowActionDialog';
+
+    dialog.style.padding = '0';
+    dialog.style.border = '0';
+    dialog.style.borderRadius = '12px';
+    dialog.style.maxWidth = '340px';
+    dialog.style.width = 'calc(100% - 32px)';
+
+    dialog.innerHTML = `
+      <div style="padding:22px; text-align:center;">
+        <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
+          What would you like to do?
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button type="button" id="rowActionEdit">Edit</button>
+          <button type="button" id="rowActionView">View PDF</button>
+          <button type="button" id="rowActionCancel">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    document.getElementById('rowActionCancel').onclick =
+      () => dialog.close();
+  }
+
+  document.getElementById('rowActionEdit').onclick =
+    () => {
+      dialog.close();
+      setTimeout(() => {
+        open(record);
+      }, 0);
+    };
+
+  document.getElementById('rowActionView').onclick =
+    () => {
+      dialog.close();
+      setTimeout(() => {
+        const viewButton =
+          document.querySelector(`[data-view="${CSS.escape(String(id))}"]`);
+
+        if (viewButton) {
+          viewButton.click();
+        }
+      }, 0);
+    };
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
 
 }
 
