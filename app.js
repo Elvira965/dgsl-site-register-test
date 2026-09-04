@@ -605,27 +605,32 @@ function render() {
 
             if (!record) return;
 
-            const viewWindow =
-              window.open('', '_blank');
-
-            if (!viewWindow) {
-              alert('Please allow pop-ups to view the PDF.');
-              return;
-            }
-
-            viewWindow.document.write(
-              '<!doctype html><html><head><title>DGSL PDF</title></head><body style="font-family:Arial,sans-serif;padding:20px;">Loading PDF…</body></html>'
-            );
-
             try {
-              open(record);
-              dlg.close();
-              await generatePdf(true, viewWindow);
+
+              open(record, false);
+
+              const blob =
+                await generatePdf(true);
+
+              const url =
+                URL.createObjectURL(blob);
+
+              $('#pdfFrame').src = url;
+
+              $('#pdfDialog').showModal();
+
+              $('#pdfDialog').dataset.blobUrl = url;
+
             } catch (error) {
+
               console.error(error);
-              viewWindow.document.body.innerHTML =
-                '<p>Unable to generate the PDF.</p>';
+
+              alert(
+                'Unable to generate the PDF.'
+              );
+
             }
+
           };
 
       }
@@ -997,7 +1002,7 @@ setupOtherDropdown(
 // OPEN FORM
 // ============================================================
 
-function open(x) {
+function open(x, showDialog = true) {
 
   editing =
     x || null;
@@ -1217,7 +1222,7 @@ otherField.style.display =
   }
 
 
-  dlg.showModal();
+  if (showDialog) dlg.showModal();
 
 }
 
@@ -2342,7 +2347,7 @@ $('#generatePdf').onclick =
   };
 
 
-async function generatePdf(viewOnly = false, viewWindow = null) {
+async function generatePdf(viewOnly = false) {
 
   try {
 
@@ -3259,15 +3264,7 @@ healthSafetyScaffolding:
 
 
     if (viewOnly) {
-      const blob = pdf.output('blob');
-      const url = URL.createObjectURL(blob);
-
-      if (viewWindow) {
-        viewWindow.location.href = url;
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      } else {
-        window.open(url, '_blank');
-      }
+      return pdf.output('blob');
     } else {
       pdf.save(
         `DGSL-${safeZone}-Handover-${today()}.pdf`
@@ -3655,4 +3652,31 @@ async function startApp() {
 
 startApp();
 
+
+
+
+
+// ============================================================
+// PDF VIEWER CLOSE
+// ============================================================
+
+$('#closePdf').onclick =
+  () => {
+
+    const pdfDialog =
+      $('#pdfDialog');
+
+    const url =
+      pdfDialog.dataset.blobUrl;
+
+    pdfDialog.close();
+
+    $('#pdfFrame').src = '';
+
+    if (url) {
+      URL.revokeObjectURL(url);
+      delete pdfDialog.dataset.blobUrl;
+    }
+
+  };
 
