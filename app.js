@@ -11,7 +11,7 @@ const SUPABASE_KEY =
   'sb_publishable_XWLtSyttiEMQA86unKN37A_ZC9OY19j';
 
 const PHOTO_BUCKET =
-  'handover-photos';
+  'handover-photos-test';
 
 const LOGO_FILE =
   'dgsl-logo.png';
