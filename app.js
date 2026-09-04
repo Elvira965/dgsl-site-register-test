@@ -674,14 +674,24 @@ function render() {
 </td>
 
 
-<td>
-  <button
+${currentUser ? `
+          <td>
+            <button
+              type="button"
+              data-edit="${esc(x.id)}"
+            >
+              Edit
+            </button>
+          </td>
+          ` : ''}
+
+          <td>
+            <button
               type="button"
               data-view="${esc(x.id)}"
             >
               View
             </button>
-
           </td>
 
         </tr>
