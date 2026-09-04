@@ -948,24 +948,27 @@ function showRowActionDialog(id) {
     dialog.style.maxWidth = '340px';
     dialog.style.width = 'calc(100% - 32px)';
 
-    dialog.innerHTML = `
-      <div style="padding:22px; text-align:center;">
-        <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
-          What would you like to do?
-        </div>
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-          ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
-          <button type="button" id="rowActionView">View PDF</button>
-          <button type="button" id="rowActionCancel">Cancel</button>
-        </div>
-      </div>
-    `;
-
     document.body.appendChild(dialog);
-
-    document.getElementById('rowActionCancel').onclick =
-      () => dialog.close();
   }
+
+  // Rebuild the buttons every time the row is clicked so the Edit
+  // button appears immediately after login, even if this dialog
+  // was first created while logged out.
+  dialog.innerHTML = `
+    <div style="padding:22px; text-align:center;">
+      <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
+        What would you like to do?
+      </div>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
+        <button type="button" id="rowActionView">View PDF</button>
+        <button type="button" id="rowActionCancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('rowActionCancel').onclick =
+    () => dialog.close();
 
   const rowEditButton =
     document.getElementById('rowActionEdit');
