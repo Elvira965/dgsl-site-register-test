@@ -96,6 +96,10 @@ function updateAuthUi() {
   if (importLabel) {
     importLabel.style.display = currentUser ? '' : 'none';
   }
+
+  document.querySelectorAll('.week-change').forEach(element => {
+    element.style.display = currentUser ? '' : 'none';
+  });
 }
 
 function showAuthDialog() {
