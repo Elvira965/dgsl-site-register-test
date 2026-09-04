@@ -74,6 +74,9 @@ function updateAuthUi() {
   const newButton = document.getElementById('newZone');
   if (newButton) newButton.style.display = currentUser ? '' : 'none';
 
+  const editHeader = document.getElementById('editHeader');
+  if (editHeader) editHeader.style.display = currentUser ? '' : 'none';
+
   document.querySelectorAll('[data-edit]').forEach(button => {
     button.style.display = currentUser ? '' : 'none';
   });
@@ -951,9 +954,8 @@ function showRowActionDialog(id) {
     document.body.appendChild(dialog);
   }
 
-  // Rebuild the buttons every time the row is clicked so the Edit
-  // button appears immediately after login, even if this dialog
-  // was first created while logged out.
+  // Rebuild the popup every time it is opened so the available
+  // actions always match the current login state.
   dialog.innerHTML = `
     <div style="padding:22px; text-align:center;">
       <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
