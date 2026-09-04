@@ -153,6 +153,39 @@
 </main>
 
 
+<dialog id="pdfDialog">
+
+  <div style="height:92vh;display:flex;flex-direction:column;">
+
+    <div class="form-head" style="padding:20px 25px;flex:0 0 auto;">
+
+      <div>
+        <p class="eyebrow">DGSL HANDOVER PDF</p>
+        <h2>View PDF</h2>
+      </div>
+
+      <button
+        type="button"
+        id="closePdf"
+        class="icon"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <iframe
+      id="pdfFrame"
+      title="Handover PDF"
+      style="width:100%;flex:1 1 auto;border:none;min-height:0;"
+    ></iframe>
+
+  </div>
+
+</dialog>
+
+
 <dialog id="formDialog">
 
 <form id="handoverForm" method="dialog">
