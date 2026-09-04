@@ -673,6 +673,10 @@ function render() {
   ${esc(formatDate(x.handoverDate))}
 </td>
 
+          <td>
+  ${esc(formatDate(x.takeBackDate))}
+</td>
+
 
 ${currentUser ? `
           <td>
