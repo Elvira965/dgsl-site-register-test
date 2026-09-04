@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1f4e78">
+<title>DGSL Site Register — TEST</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<div style="background:#b91c1c;color:#fff;text-align:center;font-weight:700;padding:8px;">DGSL SITE REGISTER — TEST VERSION</div>
+
+
+<header>
+
+  <div style="display:flex;align-items:center;gap:15px;min-width:0;">
+
+    <img
+      src="dgsl-logo.png"
+      alt="DGSL Logo"
+      style="display:block;width:220px;max-width:35vw;height:auto;object-fit:contain;"
+    >
+
+    <div>
+      <p class="eyebrow">DGSL BUILDING</p>
+      <h1>Site Handover Register</h1>
+    </div>
+
+  </div>
+
+  <button id="newZone" class="primary">
+    + New handover
+  </button>
+
+</header>
+
+
+<main>
+
+<section class="cards" aria-label="Site summary">
+
+  <article>
+    <span>Total Work Permits</span>
+    <strong id="total">0</strong>
+  </article>
+
+  <article class="amber">
+    <span>Work Permits Open</span>
+    <strong id="progress">0</strong>
+  </article>
+
+  <article class="green">
+    <span>Work Permits Closed</span>
+    <strong id="closed">0</strong>
+  </article>
+
+  <article class="red">
+    <span>Work Permits On hold</span>
+    <strong id="hold">0</strong>
+  </article>
+
+</section>
+
+
+<section class="panel">
+
+  <div class="toolbar">
+
+    <div>
+      <h2>Work Permits</h2>
+      <p></p>
+    </div>
+
+    <div class="actions">
+
+      <input
+        id="search"
+        type="search"
+        placeholder="Search zones, contractor..."
+        aria-label="Search register"
+      >
+
+      <button id="export">
+        Export backup
+      </button>
+
+      <label class="button">
+        Import backup
+        <input
+          id="import"
+          type="file"
+          accept="application/json"
+          hidden
+        >
+      </label>
+
+    </div>
+
+  </div>
+
+
+  <div class="filters">
+
+    <button data-filter="All" class="active">
+      All
+    </button>
+
+    <button data-filter="Work Permit Open">
+      Work Permit Open
+    </button>
+
+    <button data-filter="Work Permit Closed">
+      Work Permit Closed
+    </button>
+
+    <button data-filter="Work Permit on Hold">
+      Work Permit on Hold
+    </button>
+
+  </div>
+
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Zone / Area</th>
+          <th>Sub-Contractor</th>
+          <th>Work Description</th>
+          <th>Status</th>
+          <th>Handover Date</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody id="rows"></tbody>
+
+    </table>
+
+  </div>
+
+
+  <p id="empty" class="empty">
+    No handovers yet. Add your first zone to start the register.
+  </p>
+
+</section>
+
+</main>
+
+
+<dialog id="formDialog">
+
+<form id="handoverForm" method="dialog">
+
+
+  <div class="form-head">
+
+    <div>
+
+      <p class="eyebrow">HANDOVER RECORD</p>
+
+      <h2 id="formTitle">
+        New handover
+      </h2>
+
+    </div>
+
+    <button
+      type="button"
+      id="cancel"
+      class="icon"
+      aria-label="Close"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <div class="form-grid">
+
+
+    <!-- SUB-CONTRACTOR SECTION -->
+
+    <div class="wide">
+
+      <h3>Signatures</h3>
+
+      <p>
+        Sign below using your finger or mouse.
+      </p>
+
+    </div>
+
+
+    <label>
+
+      Name
+
+      <input name="contractorSigner">
+
+    </label>
+
+
+    <div class="wide">
+
+      <p>
+        <strong>Signature</strong>
+      </p>
+
+      <canvas
+        id="contractorSignature"
+        width="600"
+        height="180"
+        style="width:100%;max-width:600px;border:1px solid #ccc;border-radius:6px;touch-action:none;background:#fff;"
+      ></canvas>
+
+      <button
+        type="button"
+        id="clearContractorSignature"
+      >
+        Clear signature
+      </button>
+
+    </div>
+
+
+    <!-- DGSL HANDOVER DETAILS -->
+
+    <div class="wide">
+
+      <h3>DGSL Handover Details</h3>
+
+    </div>
+
+
+    <label>
+
+      Sub Contractor / Company Name
+
+      <input name="contractor">
+
+    </label>
+
+
+    <label>
+
+      Drawing / reference
+
+      <input
+        name="drawing"
+        placeholder="Drawing number"
+      >
+
+    </label>
+
+
+    <label>
+
+      Zone / Area
+
+      <input
+        name="zone"
+        required
+        placeholder="e.g. Apartment 201"
+      >
+
+    </label>
+
+
+    <label>
+
+  Safety Documents
+
+  <select
+    name="level"
+  >
+    <option value="Complete">Complete</option>
+    <option value="Outstanding">Outstanding</option>
+    <option value="N/A">N/A</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <input
+    type="text"
+    id="levelOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+    <label>
+
+  Housekeeping at time of Take Over
+
+  <select
+    name="trade"
+  >
+    <option value="Good">Good</option>
+    <option value="Bad">Bad</option>
+    <option value="N/A">N/A</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <input
+    type="text"
+    id="tradeOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+    <label>
+
+  Materials Checks
+
+  <select
+    name="foreman"
+  >
+    <option value="OK">OK</option>
+    <option value="Bad">Bad</option>
+    <option value="N/A">N/A</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <input
+    type="text"
+    id="foremanOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+    <label>
+
+  Health & Safety - Scaffolding / Handrails
+
+  <select
+    name="healthSafetyScaffolding"
+  >
+    <option value="OK">OK</option>
+    <option value="Bad">Bad</option>
+    <option value="N/A">N/A</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <input
+    type="text"
+    id="healthSafetyScaffoldingOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+    <label class="wide">
+
+      Work description
+
+      <textarea
+        name="description"
+        rows="3"
+        placeholder="Describe the works handed over"
+      ></textarea>
+
+    </label>
+
+
+    <label>
+
+      Status
+
+      <select name="status">
+
+  <option value="Work Permit Open">
+    Work Permit Open
+  </option>
+
+  <option value="Work Permit on Hold">
+    Work Permit on Hold
+  </option>
+
+  <option value="Work Permit Closed">
+    Work Permit Closed
+  </option>
+
+  <option value="Other">
+    Other
+  </option>
+
+</select>
+
+<input
+  type="text"
+  id="statusOther"
+  placeholder="Enter your own status"
+  style="display:none;margin-top:6px;"
+>
+
+    </label>
+
+
+    <label>
+
+      Handover date
+
+      <input
+        name="handoverDate"
+        type="date"
+      >
+
+    </label>
+
+
+    <!-- CHECKLIST -->
+
+    <div class="wide">
+
+      <h3>Checklist</h3>
+
+    </div>
+
+
+    <div class="wide">
+
+      <div
+        style="
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 45px 45px;
+          gap:8px 10px;
+          align-items:center;
+        "
+      >
+
+        <div></div>
+
+        <strong style="text-align:center;">
+          Yes
+        </strong>
+
+        <strong style="text-align:center;">
+          No
+        </strong>
+
+
+        <!-- CHECKLIST 1 -->
+
+        <div>
+          Current approved drawings, specification, RFI responses, setting-out data and revisions available at workface.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="1"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="1"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 2 -->
+
+        <div>
+          Task-specific RAMS briefed; workers inducted; Safe Pass / CSCS / trade competence checked as applicable.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="2"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="2"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 3 -->
+
+        <div>
+          Work area, access, lighting, scaffold / edge protection, temporary works, previous trade and substrate accepted
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="3"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="3"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 4 -->
+
+        <div>
+          Materials / products approved and traceable; plant, tools and test equipment inspected / certified / calibrated.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="4"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="4"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 5 -->
+
+        <div>
+          Interfaces with adjacent trades, services, deliveries, exclusion zones and shared access agreed.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="5"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="5"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 6 -->
+
+        <div>
+          Protection of completed work plus weather, water, dust, noise and environmental controls agreed.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="6"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="6"
+            data-answer="no"
+          >
+        </div>
+
+
+        <!-- CHECKLIST 7 -->
+
+        <div>
+          Hold / Witness Points, first-off, photos, tests and QA records identified; emergency, waste, housekeeping and security controls agreed.
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="7"
+            data-answer="yes"
+            checked
+          >
+        </div>
+
+        <div style="text-align:center;">
+          <input
+            type="checkbox"
+            class="takeback-check"
+            data-item="7"
+            data-answer="no"
+          >
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- DGSL TAKE BACK DETAILS -->
+
+<div class="wide">
+
+  <h3>DGSL Take Back Details</h3>
+
+</div>
+
+
+<label>
+
+  All works complete to drawings:
+
+  <select name="takeBackCompleteDrawings">
+
+    <option
+      value="To be completed"
+      style="color:red;"
+    >
+      To be completed
+    </option>
+
+    <option value="Yes">
+      Yes
+    </option>
+
+    <option value="No">
+      No
+    </option>
+
+    <option value="N/A">
+      N/A
+    </option>
+
+    <option value="Other">
+      Other
+    </option>
+
+  </select>
+
+  <input
+    type="text"
+    id="takeBackCompleteDrawingsOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+<label>
+  Take Back Date
+
+  <input
+    name="takeBackDate"
+    type="date"
+    style="height:42px;box-sizing:border-box;"
+  >
+</label>
+
+
+<label>
+
+  Housekeeping at time of Take Back
+
+  <select name="takeBackHousekeeping">
+
+    <option
+      value="To be completed"
+      style="color:red;"
+    >
+      To be completed
+    </option>
+
+    <option value="OK">
+      OK
+    </option>
+
+    <option value="Bad">
+      Bad
+    </option>
+
+    <option value="N/A">
+      N/A
+    </option>
+
+    <option value="Other">
+      Other
+    </option>
+
+  </select>
+
+  <input
+    type="text"
+    id="takeBackHousekeepingOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+
+<label>
+
+  DG to Snag completed works
+
+  <select name="takeBackSnagCompleted">
+
+    <option
+      value="To be completed"
+      style="color:red;"
+    >
+      To be completed
+    </option>
+
+    <option value="Complete">
+      Complete
+    </option>
+
+    <option value="Final snag to be done">
+      Final snag to be done
+    </option>
+
+    <option value="N/A">
+      N/A
+    </option>
+
+    <option value="Other">
+      Other
+    </option>
+
+  </select>
+
+  <input
+    type="text"
+    id="takeBackSnagCompletedOther"
+    placeholder="Enter your own answer"
+    style="display:none;margin-top:6px;"
+  >
+
+</label>
+
+    <!-- NOTES -->
+
+    <label class="wide">
+
+      Notes / outstanding items
+
+      <textarea
+        name="notes"
+        rows="3"
+        placeholder="Enter any outstanding items, snags or notes"
+      ></textarea>
+
+    </label>
+
+
+    <!-- PHOTOS -->
+
+    <label class="wide">
+
+  Site photos
+
+  <input
+    id="photos"
+    name="photos"
+    type="file"
+    accept="image/*"
+    multiple
+    capture="environment"
+  >
+
+  <small>
+    You can select or take multiple site photos.
+  </small>
+
+</label>
+
+
+    <div
+      id="photoPreview"
+      class="wide"
+      style="display:flex;flex-wrap:wrap;gap:10px;"
+    ></div>
+
+
+    <!-- DGSL SIGNATURE -->
+
+    <div class="wide">
+
+      <p>
+        <strong>DGSL representative</strong>
+      </p>
+
+    </div>
+
+
+    <label>
+
+      DGSL representative
+
+      <input name="dgslSigner">
+
+    </label>
+
+
+    <div class="wide">
+
+      <p>
+        <strong>DGSL representative signature</strong>
+      </p>
+
+      <canvas
+        id="dgslSignature"
+        width="600"
+        height="180"
+        style="width:100%;max-width:600px;border:1px solid #ccc;border-radius:6px;touch-action:none;background:#fff;"
+      ></canvas>
+
+      <button
+        type="button"
+        id="clearDgslSignature"
+      >
+        Clear signature
+      </button>
+
+    </div>
+
+
+  </div>
+
+
+  <div class="form-actions">
+
+    <button
+      type="button"
+      id="delete"
+      class="danger"
+    >
+      Delete record
+    </button>
+
+    <span></span>
+
+    <button
+      type="button"
+      id="cancel2"
+    >
+      Cancel
+    </button>
+
+    <button
+      type="button"
+      id="generatePdf"
+      class="primary"
+    >
+      Generate PDF
+    </button>
+
+    <button
+      class="primary"
+      value="default"
+    >
+      Save handover
+    </button>
+
+  </div>
+
+</form>
+
+</dialog>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
