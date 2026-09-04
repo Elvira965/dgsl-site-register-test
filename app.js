@@ -547,11 +547,18 @@ function render() {
   ${esc(formatDate(x.handoverDate))}
 </td>
 
-<td>
-  ${esc(formatDate(x.takeBackDate))}
-</td>
 
 <td>
+  <button
+              type="button"
+              data-view="${esc(x.id)}"
+            >
+              View
+            </button>
+
+          </td>
+
+          <td>
   <button
               type="button"
               data-edit="${esc(x.id)}"
@@ -575,6 +582,54 @@ function render() {
       filtered.length > 0
     );
 
+
+  document
+    .querySelectorAll(
+      '[data-view]'
+    )
+    .forEach(
+      button => {
+
+        button.onclick =
+          async function () {
+
+            const id =
+              this.getAttribute(
+                'data-view'
+              );
+
+            const record =
+              records.find(
+                x => String(x.id) === String(id)
+              );
+
+            if (!record) return;
+
+            const viewWindow =
+              window.open('', '_blank');
+
+            if (!viewWindow) {
+              alert('Please allow pop-ups to view the PDF.');
+              return;
+            }
+
+            viewWindow.document.write(
+              '<!doctype html><html><head><title>DGSL PDF</title></head><body style="font-family:Arial,sans-serif;padding:20px;">Loading PDF…</body></html>'
+            );
+
+            try {
+              open(record);
+              dlg.close();
+              await generatePdf(true, viewWindow);
+            } catch (error) {
+              console.error(error);
+              viewWindow.document.body.innerHTML =
+                '<p>Unable to generate the PDF.</p>';
+            }
+          };
+
+      }
+    );
 
   document
     .querySelectorAll(
@@ -2287,7 +2342,7 @@ $('#generatePdf').onclick =
   };
 
 
-async function generatePdf() {
+async function generatePdf(viewOnly = false, viewWindow = null) {
 
   try {
 
@@ -3203,9 +3258,21 @@ healthSafetyScaffolding:
         );
 
 
-    pdf.save(
-      `DGSL-${safeZone}-Handover-${today()}.pdf`
-    );
+    if (viewOnly) {
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+
+      if (viewWindow) {
+        viewWindow.location.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } else {
+        window.open(url, '_blank');
+      }
+    } else {
+      pdf.save(
+        `DGSL-${safeZone}-Handover-${today()}.pdf`
+      );
+    }
 
 
   } catch (error) {
