@@ -583,7 +583,49 @@ function render() {
     );
 
 
-  document
+  async function loadPdfJs() {
+
+  if (window.pdfjsLib) {
+    return window.pdfjsLib;
+  }
+
+  await new Promise(
+    (resolve, reject) => {
+
+      const script =
+        document.createElement('script');
+
+      script.src =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+
+      script.onload =
+        resolve;
+
+      script.onerror =
+        reject;
+
+      document.head.appendChild(script);
+
+    }
+  );
+
+  if (!window.pdfjsLib) {
+
+    throw new Error(
+      'PDF viewer library could not be loaded.'
+    );
+
+  }
+
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  return window.pdfjsLib;
+
+}
+
+
+document
     .querySelectorAll(
       '[data-view]'
     )
@@ -612,29 +654,73 @@ function render() {
               const blob =
                 await generatePdf(true);
 
-              const reader =
-                new FileReader();
+              const arrayBuffer =
+                await blob.arrayBuffer();
 
-              reader.onload =
-                function () {
+              const pdfjsLib =
+                await loadPdfJs();
 
-                  $('#pdfFrame').src =
-                    reader.result;
+              const pdf =
+                await pdfjsLib.getDocument({
+                  data: new Uint8Array(arrayBuffer)
+                }).promise;
 
-                  $('#pdfDialog').showModal();
+              const viewer =
+                $('#pdfViewer');
 
-                };
+              viewer.innerHTML = '';
 
-              reader.onerror =
-                function () {
+              for (
+                let pageNumber = 1;
+                pageNumber <= pdf.numPages;
+                pageNumber++
+              ) {
 
-                  alert(
-                    'Unable to display the PDF.'
-                  );
+                const page =
+                  await pdf.getPage(pageNumber);
 
-                };
+                const viewport =
+                  page.getViewport({
+                    scale: 1.25
+                  });
 
-              reader.readAsDataURL(blob);
+                const canvas =
+                  document.createElement('canvas');
+
+                const context =
+                  canvas.getContext('2d');
+
+                canvas.width =
+                  viewport.width;
+
+                canvas.height =
+                  viewport.height;
+
+                canvas.style.display =
+                  'block';
+
+                canvas.style.width =
+                  '100%';
+
+                canvas.style.height =
+                  'auto';
+
+                canvas.style.marginBottom =
+                  '12px';
+
+                canvas.style.background =
+                  '#fff';
+
+                viewer.appendChild(canvas);
+
+                await page.render({
+                  canvasContext: context,
+                  viewport: viewport
+                }).promise;
+
+              }
+
+              $('#pdfDialog').showModal();
 
             } catch (error) {
 
@@ -3683,6 +3769,6 @@ $('#closePdf').onclick =
 
     pdfDialog.close();
 
-    $('#pdfFrame').src = '';
+    $('#pdfViewer').innerHTML = '';
 
   };
