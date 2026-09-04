@@ -612,14 +612,29 @@ function render() {
               const blob =
                 await generatePdf(true);
 
-              const url =
-                URL.createObjectURL(blob);
+              const reader =
+                new FileReader();
 
-              $('#pdfFrame').src = url;
+              reader.onload =
+                function () {
 
-              $('#pdfDialog').showModal();
+                  $('#pdfFrame').src =
+                    reader.result;
 
-              $('#pdfDialog').dataset.blobUrl = url;
+                  $('#pdfDialog').showModal();
+
+                };
+
+              reader.onerror =
+                function () {
+
+                  alert(
+                    'Unable to display the PDF.'
+                  );
+
+                };
+
+              reader.readAsDataURL(blob);
 
             } catch (error) {
 
@@ -3666,17 +3681,8 @@ $('#closePdf').onclick =
     const pdfDialog =
       $('#pdfDialog');
 
-    const url =
-      pdfDialog.dataset.blobUrl;
-
     pdfDialog.close();
 
     $('#pdfFrame').src = '';
 
-    if (url) {
-      URL.revokeObjectURL(url);
-      delete pdfDialog.dataset.blobUrl;
-    }
-
   };
-
