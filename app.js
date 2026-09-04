@@ -27,8 +27,122 @@ const rows = $('#rows');
 const dlg = $('#formDialog');
 const form = $('#handoverForm');
 
+let currentUser = null;
+let authDialog = null;
+
 const today = () =>
   new Date().toISOString().slice(0, 10);
+
+// ============================================================
+// AUTHENTICATION UI
+// ============================================================
+
+function ensureAuthUi() {
+  if (document.getElementById('dgslAuthButton')) return;
+
+  const button = document.createElement('button');
+  button.id = 'dgslAuthButton';
+  button.type = 'button';
+  button.textContent = 'Log in';
+  button.style.marginLeft = '8px';
+
+  button.onclick = async () => {
+    if (currentUser) {
+      await supabaseClient.auth.signOut();
+    } else {
+      showAuthDialog();
+    }
+  };
+
+  const newButton = document.getElementById('newZone');
+  if (newButton && newButton.parentNode) {
+    newButton.parentNode.insertBefore(button, newButton.nextSibling);
+  } else {
+    document.body.appendChild(button);
+  }
+
+  updateAuthUi();
+}
+
+function updateAuthUi() {
+  const button = document.getElementById('dgslAuthButton');
+  if (button) button.textContent = currentUser ? 'Log out' : 'Log in';
+
+  const newButton = document.getElementById('newZone');
+  if (newButton) newButton.style.display = currentUser ? '' : 'none';
+
+  document.querySelectorAll('[data-edit]').forEach(button => {
+    button.style.display = currentUser ? '' : 'none';
+  });
+
+  const deleteButton = document.getElementById('delete');
+  if (deleteButton && !currentUser) {
+    deleteButton.style.display = 'none';
+  }
+}
+
+function showAuthDialog() {
+  if (!authDialog) {
+    authDialog = document.createElement('dialog');
+    authDialog.id = 'dgslAuthDialog';
+    authDialog.style.padding = '0';
+    authDialog.style.border = '0';
+    authDialog.style.borderRadius = '12px';
+    authDialog.style.maxWidth = '360px';
+    authDialog.style.width = 'calc(100% - 32px)';
+
+    authDialog.innerHTML = `
+      <div style="padding:22px;">
+        <div style="font-size:20px;font-weight:700;margin-bottom:16px;">
+          DGSL Site Register Login
+        </div>
+        <label style="display:block;margin-bottom:6px;font-weight:600;">Email</label>
+        <input id="dgslLoginEmail" type="email" autocomplete="email"
+          style="width:100%;box-sizing:border-box;margin-bottom:12px;">
+        <label style="display:block;margin-bottom:6px;font-weight:600;">Password</label>
+        <input id="dgslLoginPassword" type="password" autocomplete="current-password"
+          style="width:100%;box-sizing:border-box;margin-bottom:12px;">
+        <div id="dgslAuthStatus" style="min-height:20px;margin-bottom:12px;font-size:14px;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" id="dgslLoginCancel">Cancel</button>
+          <button type="button" id="dgslLoginSubmit">Log in</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(authDialog);
+
+    authDialog.querySelector('#dgslLoginCancel').onclick = () => authDialog.close();
+
+    authDialog.querySelector('#dgslLoginSubmit').onclick = async () => {
+      const email = authDialog.querySelector('#dgslLoginEmail').value.trim();
+      const password = authDialog.querySelector('#dgslLoginPassword').value;
+      const status = authDialog.querySelector('#dgslAuthStatus');
+
+      if (!email || !password) {
+        status.textContent = 'Please enter your email and password.';
+        return;
+      }
+
+      status.textContent = 'Logging in...';
+
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        status.textContent = error.message;
+        return;
+      }
+
+      status.textContent = '';
+      authDialog.close();
+    };
+  }
+
+  authDialog.showModal();
+}
 
 
 // ============================================================
@@ -765,7 +879,7 @@ document
                   String(id)
               );
 
-            if (record) {
+            if (record && currentUser) {
               open(record);
             }
 
@@ -847,7 +961,7 @@ function showRowActionDialog(id) {
           What would you like to do?
         </div>
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-          <button type="button" id="rowActionEdit">Edit</button>
+          ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
           <button type="button" id="rowActionView">View PDF</button>
           <button type="button" id="rowActionCancel">Cancel</button>
         </div>
@@ -860,11 +974,21 @@ function showRowActionDialog(id) {
       () => dialog.close();
   }
 
-  document.getElementById('rowActionEdit').onclick =
-    () => {
-      dialog.close();
-      setTimeout(() => open(record), 0);
-    };
+  const rowEditButton =
+    document.getElementById('rowActionEdit');
+
+  if (rowEditButton) {
+    rowEditButton.onclick =
+      () => {
+        if (!currentUser) {
+          dialog.close();
+          return;
+        }
+
+        dialog.close();
+        setTimeout(() => open(record), 0);
+      };
+  }
 
   document.getElementById('rowActionView').onclick =
     () => {
@@ -1463,7 +1587,9 @@ otherField.style.display =
 // ============================================================
 
 $('#newZone').onclick =
-  () => open();
+  () => {
+    if (currentUser) open();
+  };
 
 
 // ============================================================
@@ -3908,6 +4034,25 @@ async function startApp() {
     addLogoToForm();
 
     await loadSupabase();
+
+    const { data: sessionData } =
+      await supabaseClient.auth.getSession();
+
+    currentUser =
+      sessionData?.session?.user || null;
+
+    ensureAuthUi();
+    updateAuthUi();
+
+    supabaseClient.auth.onAuthStateChange(
+      (_event, session) => {
+        currentUser =
+          session?.user || null;
+
+        updateAuthUi();
+        render();
+      }
+    );
 
     await loadRecords();
 
