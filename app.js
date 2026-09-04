@@ -3111,48 +3111,35 @@ healthSafetyScaffolding:
 
 
     // --------------------------------------------------------
-    // DGSL TAKE BACK DETAILS
+    // PAGE 2: DGSL TAKE BACK DETAILS
     // --------------------------------------------------------
 
-    if (
-      y > 235
-    ) {
+    // Keep the Take Back section on page 2.
+    pdf.addPage();
 
-      pdf.addPage();
+    y = 20;
 
-      y =
-        20;
+    if (logoData) {
 
-
-      if (logoData) {
-
-        pdf.addImage(
-          logoData,
-          'PNG',
-          140,
-          10,
-          55,
-          11.1
-        );
-
-      }
+      pdf.addImage(
+        logoData,
+        'PNG',
+        140,
+        10,
+        55,
+        11.1
+      );
 
     }
-
-
-    y += 3;
-
 
     pdf.setFont(
       undefined,
       'bold'
     );
 
-
     pdf.setFontSize(
       12
     );
-
 
     pdf.text(
       'DGSL Take Back Details',
@@ -3160,77 +3147,42 @@ healthSafetyScaffolding:
       y
     );
 
-
     y += 7;
-
 
     pdf.setFontSize(
       10
     );
-
 
     addField(
       'Take Back Date',
       formatDate(data.takeBackDate)
     );
 
-
     addField(
       'All works complete to drawings',
       data.takeBackCompleteDrawings
     );
-
 
     addField(
       'Housekeeping at time of Take Back',
       data.takeBackHousekeeping
     );
 
-
     addField(
       'DG to Snag completed works',
       data.takeBackSnagCompleted
     );
 
-
     // --------------------------------------------------------
     // NOTES
     // --------------------------------------------------------
 
-    if (
-      y > 235
-    ) {
-
-      pdf.addPage();
-
-      y =
-        20;
-
-
-      if (logoData) {
-
-        pdf.addImage(
-          logoData,
-          'PNG',
-          140,
-          10,
-          55,
-          11.1
-        );
-
-      }
-
-    }
-
-
-    y += 3;
-
+    y += 2;
 
     pdf.setFont(
       undefined,
       'bold'
     );
-
 
     pdf.text(
       'Notes / Outstanding Items',
@@ -3238,15 +3190,12 @@ healthSafetyScaffolding:
       y
     );
 
-
     y += 6;
-
 
     pdf.setFont(
       undefined,
       'normal'
     );
-
 
     const noteLines =
       pdf.splitTextToSize(
@@ -3255,13 +3204,11 @@ healthSafetyScaffolding:
           margin * 2
       );
 
-
     pdf.text(
       noteLines,
       margin,
       y
     );
-
 
     y +=
       Math.max(
@@ -3269,42 +3216,16 @@ healthSafetyScaffolding:
         noteLines.length * 5
       );
 
-
     // --------------------------------------------------------
     // SIGNATURES
     // --------------------------------------------------------
 
-    if (
-      y > 220
-    ) {
-
-      pdf.addPage();
-
-      y =
-        20;
-
-
-      if (logoData) {
-
-        pdf.addImage(
-          logoData,
-          'PNG',
-          140,
-          10,
-          55,
-          11.1
-        );
-
-      }
-
-    }
-
+    y += 2;
 
     pdf.setFont(
       undefined,
       'bold'
     );
-
 
     pdf.text(
       'Signatures',
@@ -3312,15 +3233,12 @@ healthSafetyScaffolding:
       y
     );
 
-
-    y += 8;
-
+    y += 7;
 
     pdf.setFont(
       undefined,
       'normal'
     );
-
 
     pdf.text(
       `Sub-Contractor Name: ${
@@ -3330,9 +3248,7 @@ healthSafetyScaffolding:
       y
     );
 
-
     y += 5;
-
 
     pdf.addImage(
       $('#contractorSignature')
@@ -3342,13 +3258,11 @@ healthSafetyScaffolding:
       'PNG',
       margin,
       y,
-      80,
-      24
+      65,
+      20
     );
 
-
-    y += 32;
-
+    y += 26;
 
     pdf.text(
       `DGSL Representative: ${
@@ -3358,9 +3272,7 @@ healthSafetyScaffolding:
       y
     );
 
-
     y += 5;
-
 
     pdf.addImage(
       $('#dgslSignature')
@@ -3370,54 +3282,34 @@ healthSafetyScaffolding:
       'PNG',
       margin,
       y,
-      80,
-      24
+      65,
+      20
     );
 
+    y += 25;
 
     // --------------------------------------------------------
-    // PHOTOS
+    // SITE PHOTOS
+    // Photos are placed immediately below the DGSL
+    // Representative signature and arranged two per row
+    // to help keep the document to two pages.
     // --------------------------------------------------------
 
     const photoUrls =
       editing?.photos || [];
 
-
     if (
       photoUrls.length > 0
     ) {
 
-      pdf.addPage();
-
-
-      y =
-        20;
-
-
-      if (logoData) {
-
-        pdf.addImage(
-          logoData,
-          'PNG',
-          140,
-          10,
-          55,
-          11.1
-        );
-
-      }
-
-
       pdf.setFontSize(
-        16
+        12
       );
-
 
       pdf.setFont(
         undefined,
         'bold'
       );
-
 
       pdf.text(
         'SITE PHOTOS',
@@ -3425,9 +3317,16 @@ healthSafetyScaffolding:
         y
       );
 
+      y += 6;
 
-      y += 10;
+      const photoMaxWidth = 78;
+      const photoMaxHeight = 42;
+      const photoGap = 4;
+      const secondPhotoX = margin + photoMaxWidth + photoGap;
 
+      let photoRowY = y;
+      let photoColumn = 0;
+      let rowHeight = 0;
 
       for (
         const url
@@ -3441,15 +3340,79 @@ healthSafetyScaffolding:
               url
             );
 
-
-          y =
-            await addImageToPdf(
-              pdf,
-              imageData,
-              y,
-              margin
+          const dimensions =
+            await getImageDimensions(
+              imageData
             );
 
+          let width = photoMaxWidth;
+          let height =
+            (dimensions.height / dimensions.width) * width;
+
+          if (height > photoMaxHeight) {
+            height = photoMaxHeight;
+            width =
+              (dimensions.width / dimensions.height) * height;
+          }
+
+          // If the photos cannot fit on page 2, start a new page.
+          // This keeps the layout compact while avoiding clipped photos.
+          if (
+            photoRowY + height > 285
+          ) {
+
+            pdf.addPage();
+
+            photoRowY = 20;
+            photoColumn = 0;
+            rowHeight = 0;
+
+            if (logoData) {
+
+              pdf.addImage(
+                logoData,
+                'PNG',
+                140,
+                10,
+                55,
+                11.1
+              );
+
+            }
+
+          }
+
+          const photoX =
+            photoColumn === 0
+              ? margin
+              : secondPhotoX;
+
+          pdf.addImage(
+            imageData,
+            'JPEG',
+            photoX,
+            photoRowY,
+            width,
+            height
+          );
+
+          rowHeight =
+            Math.max(
+              rowHeight,
+              height
+            );
+
+          if (photoColumn === 0) {
+
+            photoColumn = 1;
+
+          } else {
+
+            photoColumn = 0;
+            photoRowY += rowHeight + 5;
+            rowHeight = 0;
+
+          }
 
         } catch (error) {
 
@@ -3463,7 +3426,6 @@ healthSafetyScaffolding:
       }
 
     }
-
 
     // --------------------------------------------------------
     // SAVE PDF
