@@ -543,6 +543,47 @@ function formatDate(value) {
 }
 
 
+function isThisWeek(value) {
+
+  if (!value) return false;
+
+  const text = String(value).slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+
+  const date = new Date(`${text}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return false;
+
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  const day = todayDate.getDay();
+  const daysFromMonday = (day + 6) % 7;
+
+  const startOfWeek = new Date(todayDate);
+  startOfWeek.setDate(todayDate.getDate() - daysFromMonday);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+  return date >= startOfWeek && date < endOfWeek;
+}
+
+
+function updateWeekChange(id, count) {
+
+  const element = $(`#${id}`);
+
+  if (!element) return;
+
+  element.textContent =
+    count > 0
+      ? `↑ ${count} this week`
+      : 'No change';
+}
+
+
 function esc(x = '') {
 
   return String(x)
@@ -628,6 +669,33 @@ function render() {
         x.status ===
         'Work Permit on Hold'
     ).length;
+
+
+  const thisWeek =
+    records.filter(x => isThisWeek(x.handoverDate));
+
+  updateWeekChange('totalWeek', thisWeek.length);
+
+  updateWeekChange(
+    'progressWeek',
+    thisWeek.filter(
+      x => x.status === 'Work Permit Open'
+    ).length
+  );
+
+  updateWeekChange(
+    'closedWeek',
+    thisWeek.filter(
+      x => x.status === 'Work Permit Closed'
+    ).length
+  );
+
+  updateWeekChange(
+    'holdWeek',
+    thisWeek.filter(
+      x => x.status === 'Work Permit on Hold'
+    ).length
+  );
 
 
   rows.innerHTML =

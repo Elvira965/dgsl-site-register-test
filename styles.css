@@ -259,7 +259,57 @@ main {
 
 .cards article strong {
 
+  display: block;
+
   font-size: 28px;
+
+}
+
+
+.cards article .week-change {
+
+  display: block;
+
+  margin-top: 7px;
+
+  font-size: 13px;
+
+  color: #68737d;
+
+}
+
+
+.cards article.blue .week-change {
+
+  color: #2f80ed;
+
+}
+
+
+.cards article.amber .week-change {
+
+  color: #d99b24;
+
+}
+
+
+.cards article.green .week-change {
+
+  color: #3b8f5a;
+
+}
+
+
+.cards article.red .week-change {
+
+  color: #c84b4b;
+
+}
+
+
+.cards article.blue {
+
+  border-left: 4px solid #2f80ed;
 
 }
 
