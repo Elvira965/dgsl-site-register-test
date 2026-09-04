@@ -770,30 +770,37 @@ document
 
 
   // Make the whole handover row clickable.
-  document
-    .querySelectorAll('[data-row-id]')
-    .forEach(
-      row => {
+  // Use event delegation on the table body so this also works
+  // reliably after filtering/searching and on mobile browsers.
+  rows.onclick =
+    function (event) {
 
-        row.style.cursor = 'pointer';
+      let element = event.target;
 
-        row.onclick =
-          function (event) {
+      // Do not trigger the row action when an existing button is tapped.
+      while (element && element !== rows) {
 
-            // Keep the existing View/Edit buttons working normally.
-            if (event.target.closest('button, a, input, select, textarea')) {
-              return;
-            }
+        if (element.tagName === 'BUTTON' || element.tagName === 'A') {
+          return;
+        }
 
-            const id =
-              this.getAttribute('data-row-id');
+        if (element.tagName === 'TR') {
 
+          const id =
+            element.getAttribute('data-row-id');
+
+          if (id) {
             showRowActionDialog(id);
+          }
 
-          };
+          return;
+        }
 
+        element = element.parentElement;
       }
-    );
+
+    };
+
 
 }
 
@@ -850,21 +857,30 @@ function showRowActionDialog(id) {
   document.getElementById('rowActionEdit').onclick =
     () => {
       dialog.close();
-      setTimeout(() => {
-        open(record);
-      }, 0);
+      setTimeout(() => open(record), 0);
     };
 
   document.getElementById('rowActionView').onclick =
     () => {
       dialog.close();
       setTimeout(() => {
-        const viewButton =
-          document.querySelector(`[data-view="${CSS.escape(String(id))}"]`);
 
-        if (viewButton) {
-          viewButton.click();
+        // Call the existing View button without relying on CSS.escape.
+        const viewButtons =
+          document.querySelectorAll('[data-view]');
+
+        for (const button of viewButtons) {
+
+          if (
+            String(button.getAttribute('data-view')) ===
+            String(id)
+          ) {
+            button.click();
+            break;
+          }
+
         }
+
       }, 0);
     };
 
