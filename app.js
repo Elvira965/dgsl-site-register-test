@@ -136,6 +136,7 @@ function fromDatabase(x) {
 // This must be kept separately from the file input because mobile
 // browsers replace input.files when the camera/gallery is opened again.
 let pendingPhotoFiles = [];
+let photosToRemove = [];
 
   try {
 
@@ -1294,6 +1295,7 @@ clearSignature(
 
   // Start a fresh pending-photo list for this New/Edit session.
   pendingPhotoFiles = [];
+  photosToRemove = [];
 
 
   restoreTakeBackChecklist(
@@ -1519,38 +1521,54 @@ function renderPendingPhotoPreviews() {
     return;
   }
 
-  // Keep the saved-photo previews and add a small preview for each
-  // newly selected photo. Re-rendering from scratch avoids duplicates.
   preview.innerHTML = '';
 
   if (editing?.photos) {
-
-    showSavedPhotos(
-      editing.photos
-    );
-
+    showSavedPhotos(editing.photos);
   }
 
-  pendingPhotoFiles.forEach(
-    file => {
+  pendingPhotoFiles.forEach((file, index) => {
 
-      const img =
-        document.createElement('img');
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'inline-block';
+    wrapper.style.position = 'relative';
+    wrapper.style.marginRight = '6px';
+    wrapper.style.marginBottom = '6px';
 
-      img.src =
-        URL.createObjectURL(file);
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.style.width = '110px';
+    img.style.height = '80px';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '6px';
+    img.style.border = '2px solid #1976d2';
 
-      img.style.width = '110px';
-      img.style.height = '80px';
-      img.style.objectFit = 'cover';
-      img.style.borderRadius = '6px';
-      img.style.border = '2px solid #1976d2';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.title = 'Remove photo';
+    remove.style.position = 'absolute';
+    remove.style.top = '2px';
+    remove.style.right = '2px';
+    remove.style.width = '28px';
+    remove.style.height = '28px';
+    remove.style.padding = '0';
+    remove.style.borderRadius = '50%';
+    remove.style.border = '1px solid #fff';
+    remove.style.background = '#d32f2f';
+    remove.style.color = '#fff';
+    remove.style.fontSize = '20px';
+    remove.style.lineHeight = '24px';
+    remove.style.cursor = 'pointer';
+    remove.onclick = () => {
+      pendingPhotoFiles.splice(index, 1);
+      renderPendingPhotoPreviews();
+    };
 
-      preview.appendChild(img);
-
-    }
-  );
-
+    wrapper.appendChild(img);
+    wrapper.appendChild(remove);
+    preview.appendChild(wrapper);
+  });
 }
 
 
@@ -1698,7 +1716,9 @@ if (
 
       x.photos =
         editing?.photos
-          ? [...editing.photos]
+          ? editing.photos.filter(
+              url => !photosToRemove.includes(url)
+            )
           : [];
 
 
@@ -1786,6 +1806,11 @@ for (
 
       }
 
+
+      // Delete photos that were removed from the handover.
+      for (const url of photosToRemove) {
+        await deletePhoto(url);
+      }
 
       dlg.close();
 
@@ -1899,78 +1924,64 @@ function showSavedPhotos(
   photos
 ) {
 
-  const preview =
-    $('#photoPreview');
-
+  const preview = $('#photoPreview');
 
   if (!preview) {
     return;
   }
 
-
-  preview.innerHTML =
-    '';
-
-
-  if (
-    !Array.isArray(
-      photos
-    )
-  ) {
-
+  if (!Array.isArray(photos)) {
     return;
-
   }
 
+  photos.forEach(url => {
 
-  photos.forEach(
-    url => {
-
-      const img =
-        document.createElement(
-          'img'
-        );
-
-
-      img.src =
-        url;
-
-
-      img.style.width =
-        '110px';
-
-
-      img.style.height =
-        '80px';
-
-
-      img.style.objectFit =
-        'cover';
-
-
-      img.style.borderRadius =
-        '6px';
-
-
-      img.style.border =
-        '1px solid #ccc';
-
-
-      img.style.marginRight =
-        '6px';
-
-
-      img.style.marginBottom =
-        '6px';
-
-
-      preview.appendChild(
-        img
-      );
-
+    if (photosToRemove.includes(url)) {
+      return;
     }
-  );
 
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'inline-block';
+    wrapper.style.position = 'relative';
+    wrapper.style.marginRight = '6px';
+    wrapper.style.marginBottom = '6px';
+
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.width = '110px';
+    img.style.height = '80px';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '6px';
+    img.style.border = '1px solid #ccc';
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.title = 'Remove photo';
+    remove.style.position = 'absolute';
+    remove.style.top = '2px';
+    remove.style.right = '2px';
+    remove.style.width = '28px';
+    remove.style.height = '28px';
+    remove.style.padding = '0';
+    remove.style.borderRadius = '50%';
+    remove.style.border = '1px solid #fff';
+    remove.style.background = '#d32f2f';
+    remove.style.color = '#fff';
+    remove.style.fontSize = '20px';
+    remove.style.lineHeight = '24px';
+    remove.style.cursor = 'pointer';
+    remove.onclick = () => {
+      if (!photosToRemove.includes(url)) {
+        photosToRemove.push(url);
+      }
+      renderPendingPhotoPreviews();
+    };
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(remove);
+    preview.appendChild(wrapper);
+  });
 }
 
 
