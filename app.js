@@ -132,6 +132,11 @@ function fromDatabase(x) {
 
   let photos = [];
 
+// Photos selected during the current New/Edit session.
+// This must be kept separately from the file input because mobile
+// browsers replace input.files when the camera/gallery is opened again.
+let pendingPhotoFiles = [];
+
   try {
 
     photos =
@@ -1287,6 +1292,9 @@ clearSignature(
     .innerHTML =
       '';
 
+  // Start a fresh pending-photo list for this New/Edit session.
+  pendingPhotoFiles = [];
+
 
   restoreTakeBackChecklist(
     {}
@@ -1466,6 +1474,87 @@ $('#cancel2').onclick =
 
 
 // ============================================================
+// ADD PHOTOS
+// ============================================================
+
+// Mobile camera/gallery pickers replace the contents of the file
+// input each time they are opened. Accumulate each selection here.
+if (form.elements.photos) {
+
+  form.elements.photos.onchange =
+    e => {
+
+      const selected =
+        Array.from(
+          e.target.files || []
+        ).filter(
+          file =>
+            file.type.startsWith('image/')
+        );
+
+      if (selected.length) {
+
+        pendingPhotoFiles.push(
+          ...selected
+        );
+
+        renderPendingPhotoPreviews();
+
+      }
+
+      // Clear the input so the user can choose/take another photo,
+      // including the same file again if needed.
+      e.target.value = '';
+
+    };
+
+}
+
+function renderPendingPhotoPreviews() {
+
+  const preview =
+    $('#photoPreview');
+
+  if (!preview) {
+    return;
+  }
+
+  // Keep the saved-photo previews and add a small preview for each
+  // newly selected photo. Re-rendering from scratch avoids duplicates.
+  preview.innerHTML = '';
+
+  if (editing?.photos) {
+
+    showSavedPhotos(
+      editing.photos
+    );
+
+  }
+
+  pendingPhotoFiles.forEach(
+    file => {
+
+      const img =
+        document.createElement('img');
+
+      img.src =
+        URL.createObjectURL(file);
+
+      img.style.width = '110px';
+      img.style.height = '80px';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '6px';
+      img.style.border = '2px solid #1976d2';
+
+      preview.appendChild(img);
+
+    }
+  );
+
+}
+
+
+// ============================================================
 // SAVE HANDOVER
 // ============================================================
 
@@ -1617,14 +1706,11 @@ if (
 // NEW PHOTOS
 // ------------------------------------------------------
 
-const files =
-  Array.from(
-    form.elements.photos?.files || []
-  );
-
+// Use the accumulated list so taking/selecting another photo
+// adds to the previous ones instead of replacing them.
 for (
   const file
-  of files
+  of pendingPhotoFiles
 ) {
 
   if (
