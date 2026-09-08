@@ -2446,6 +2446,31 @@ function setupSignature(
   let drawing =
     false;
 
+  let signatureActive =
+    false;
+
+
+  function setActive(active) {
+    signatureActive = active;
+    canvas.classList.toggle(
+      'signature-active',
+      active
+    );
+  }
+
+
+  function activate(e) {
+    // The first click/tap only activates the signature box.
+    // This prevents accidental strokes while scrolling the form.
+    if (!signatureActive) {
+      setActive(true);
+
+      if (e && e.type === 'mousedown') {
+        e.preventDefault();
+      }
+    }
+  }
+
 
   function position(e) {
 
@@ -2489,6 +2514,12 @@ function setupSignature(
 
   function start(e) {
 
+    if (!signatureActive) {
+      activate(e);
+      return;
+    }
+
+
     e.preventDefault();
 
 
@@ -2513,7 +2544,7 @@ function setupSignature(
 
   function move(e) {
 
-    if (!drawing) {
+    if (!drawing || !signatureActive) {
       return;
     }
 
@@ -2553,6 +2584,12 @@ function setupSignature(
     ctx.closePath();
 
   }
+
+
+  canvas.addEventListener(
+    'click',
+    activate
+  );
 
 
   canvas.addEventListener(

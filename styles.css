@@ -1036,3 +1036,9 @@ dialog::backdrop {
 .actions label.button:hover {
   background: #f1f5f8;
 }
+
+
+/* Signature boxes only become active for drawing after a deliberate click/tap. */
+canvas.signature-active {
+  border: 2px solid #d32f2f !important;
+}
