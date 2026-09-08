@@ -96,10 +96,6 @@ function updateAuthUi() {
   if (importLabel) {
     importLabel.style.display = currentUser ? '' : 'none';
   }
-
-  document.querySelectorAll('.week-change').forEach(element => {
-    element.style.display = currentUser ? '' : 'none';
-  });
 }
 
 function showAuthDialog() {
@@ -1444,6 +1440,21 @@ setupOtherDropdown(
   'takeBackSnagCompleted',
   'takeBackSnagCompletedOther'
 );
+
+// Automatically close the work permit when the DGSL representative
+// field is filled in. The status dropdown remains editable afterwards.
+const dgslRepresentativeField = form.elements.dgslSigner;
+const statusField = form.elements.status;
+
+if (dgslRepresentativeField && statusField) {
+  dgslRepresentativeField.addEventListener('input', () => {
+    if (dgslRepresentativeField.value.trim()) {
+      statusField.value = 'Work Permit Closed';
+      statusField.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
 // ============================================================
 // OPEN FORM
 // ============================================================
@@ -2996,7 +3007,6 @@ async function generatePdf(viewOnly = false) {
     );
 
 
-    y += 8;
 
 
     const data = {
@@ -3048,6 +3058,65 @@ healthSafetyScaffolding:
     form.elements.dgslSigner?.value || ''
 };
 
+
+    // STATUS BUBBLE — top right, directly beneath the header line.
+    const statusColors = {
+      'Work Permit Open': [246, 196, 83],
+      'Work Permit Closed': [122, 203, 138],
+      'Work Permit on Hold': [239, 119, 119]
+    };
+
+    const statusColor =
+      statusColors[data.status] || [217, 222, 227];
+
+    const statusBubbleX = 145;
+    const statusBubbleY = y + 3;
+    const statusBubbleWidth = 50;
+    const statusBubbleHeight = 9;
+
+    pdf.setFillColor(
+      statusColor[0],
+      statusColor[1],
+      statusColor[2]
+    );
+
+    pdf.roundedRect(
+      statusBubbleX,
+      statusBubbleY,
+      statusBubbleWidth,
+      statusBubbleHeight,
+      3,
+      3,
+      'F'
+    );
+
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, 'bold');
+    pdf.setTextColor(34, 34, 34);
+
+    const statusText = data.status || '';
+    const statusTextLines =
+      pdf.splitTextToSize(
+        statusText,
+        statusBubbleWidth - 6
+      );
+
+    const statusTextY =
+      statusBubbleY +
+      statusBubbleHeight / 2 +
+      (statusTextLines.length === 1 ? 1.1 : 0);
+
+    pdf.text(
+      statusTextLines,
+      statusBubbleX + statusBubbleWidth / 2,
+      statusTextY,
+      { align: 'center' }
+    );
+
+    pdf.setTextColor(0, 0, 0);
+
+
+    y += 8;
 
     // --------------------------------------------------------
     // PDF FIELD
@@ -3192,12 +3261,6 @@ healthSafetyScaffolding:
     addField(
       'Work Description',
       data.description
-    );
-
-
-    addField(
-      'Status',
-      data.status
     );
 
 

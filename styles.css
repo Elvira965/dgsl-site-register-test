@@ -547,11 +547,9 @@ td small {
 }
 
 
-/* Center the Status, Edit and View headings and their cells over the controls. */
-th:nth-child(4),
+/* Keep Edit and View headings and their cells centered over the controls. */
 th:nth-child(7),
 th:nth-child(8),
-td:nth-child(4),
 td:nth-child(7),
 td:nth-child(8) {
   text-align: center;
