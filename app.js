@@ -2459,17 +2459,17 @@ function setupSignature(
   }
 
 
-  function activate(e) {
-    // The first click/tap only activates the signature box.
-    // This prevents accidental strokes while scrolling the form.
-    if (!signatureActive) {
-      setActive(true);
-
-      if (e && e.type === 'mousedown') {
-        e.preventDefault();
-      }
-    }
+  function activate() {
+    // A deliberate click/tap activates drawing.
+    setActive(true);
   }
+
+
+  // Allow the form-opening/clearing code to fully deactivate this pad.
+  canvas.deactivateSignature = () => {
+    drawing = false;
+    setActive(false);
+  };
 
 
   function position(e) {
@@ -2514,8 +2514,8 @@ function setupSignature(
 
   function start(e) {
 
+    // Inactive pads never draw. A click/tap must activate the pad first.
     if (!signatureActive) {
-      activate(e);
       return;
     }
 
@@ -2589,6 +2589,16 @@ function setupSignature(
   canvas.addEventListener(
     'click',
     activate
+  );
+
+
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!canvas.contains(e.target)) {
+        canvas.deactivateSignature();
+      }
+    }
   );
 
 
@@ -2673,6 +2683,11 @@ function clearSignature(
     canvas.width,
     canvas.height
   );
+
+
+  if (canvas.deactivateSignature) {
+    canvas.deactivateSignature();
+  }
 
 }
 

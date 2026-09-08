@@ -1038,7 +1038,7 @@ dialog::backdrop {
 }
 
 
-/* Signature boxes only become active for drawing after a deliberate click/tap. */
+/* Signature boxes turn red only while drawing is deliberately activated. */
 canvas.signature-active {
   border: 2px solid #d32f2f !important;
 }
