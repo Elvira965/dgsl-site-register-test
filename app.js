@@ -1063,7 +1063,9 @@ function showRowActionDialog(id) {
       </div>
       <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
+        ${currentUser ? '<button type="button" id="rowActionCopy">Copy</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
+        <button type="button" id="rowActionDownload">Download PDF</button>
         <button type="button" id="rowActionCancel">Cancel</button>
       </div>
     </div>
@@ -1111,6 +1113,54 @@ function showRowActionDialog(id) {
 
       }, 0);
     };
+
+  const rowDownloadButton =
+    document.getElementById('rowActionDownload');
+
+  if (rowDownloadButton) {
+    rowDownloadButton.onclick =
+      async () => {
+        if (!currentUser) {
+          // Download is available to logged-out users too.
+        }
+
+        dialog.close();
+
+        try {
+          open(record, false);
+          await generatePdf(false);
+        } catch (error) {
+          console.error('PDF download error:', error);
+          alert('Unable to download the PDF.');
+        }
+      };
+  }
+
+  const rowCopyButton =
+    document.getElementById('rowActionCopy');
+
+  if (rowCopyButton) {
+    rowCopyButton.onclick =
+      async () => {
+        if (!currentUser) {
+          dialog.close();
+          return;
+        }
+
+        dialog.close();
+
+        try {
+          rowCopyButton.disabled = true;
+          await copyHandover(record);
+        } catch (error) {
+          console.error('Copy handover error:', error);
+          alert(
+            'There was a problem copying the handover.\n\n' +
+            error.message
+          );
+        }
+      };
+  }
 
   if (!dialog.open) {
     dialog.showModal();
@@ -2086,6 +2136,141 @@ for (
     }
 
   };
+
+
+// ============================================================
+// COPY HANDOVER
+// ============================================================
+
+async function copyPhotoForHandover(
+  url,
+  newHandoverId
+) {
+
+  const response =
+    await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Could not copy photo (${response.status}).`
+    );
+  }
+
+  const blob =
+    await response.blob();
+
+  let extension =
+    'jpg';
+
+  try {
+    const marker =
+      `/object/public/${PHOTO_BUCKET}/`;
+
+    const index =
+      url.indexOf(marker);
+
+    if (index !== -1) {
+      const path =
+        decodeURIComponent(
+          url.substring(index + marker.length)
+        );
+      const name =
+        path.split('/').pop() || '';
+      const match =
+        name.match(/\.([a-z0-9]+)$/i);
+      if (match) {
+        extension = match[1].toLowerCase();
+      }
+    }
+  } catch (_) {
+    // Keep the default extension if the source URL cannot be parsed.
+  }
+
+  const filename =
+    `${newHandoverId}/${crypto.randomUUID()}.${extension}`;
+
+  const { error } =
+    await supabaseClient
+      .storage
+      .from(PHOTO_BUCKET)
+      .upload(
+        filename,
+        blob,
+        {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: blob.type || undefined
+        }
+      );
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } =
+    supabaseClient
+      .storage
+      .from(PHOTO_BUCKET)
+      .getPublicUrl(filename);
+
+  return data.publicUrl;
+
+}
+
+
+async function copyHandover(record) {
+
+  if (!currentUser) {
+    throw new Error('You must be logged in to copy a handover.');
+  }
+
+  const newId =
+    crypto.randomUUID();
+
+  const copiedPhotos = [];
+
+  try {
+
+    for (const url of Array.isArray(record.photos) ? record.photos : []) {
+      copiedPhotos.push(
+        await copyPhotoForHandover(url, newId)
+      );
+    }
+
+    const copiedRecord = {
+      ...record,
+      id: newId,
+      photos: copiedPhotos
+    };
+
+    const databaseRecord =
+      toDatabase(copiedRecord);
+
+    const { error } =
+      await supabaseClient
+        .from('handovers_test')
+        .insert(databaseRecord);
+
+    if (error) {
+      throw error;
+    }
+
+    await loadRecords();
+
+    alert('Handover copied.');
+
+  } catch (error) {
+
+    // If photo copying succeeded but the database insert failed, clean up
+    // the newly-created copies so the original handover is untouched.
+    for (const url of copiedPhotos) {
+      await deletePhoto(url);
+    }
+
+    throw error;
+  }
+
+}
 
 
 // ============================================================
@@ -3293,10 +3478,22 @@ healthSafetyScaffolding:
     );
 
 
-    addField(
-      'Safety Documents',
-      data.level
-    );
+    // Show "Outstanding" in red in the PDF.
+    if (String(data.level || '').trim().toLowerCase() === 'outstanding') {
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Safety Documents:', margin, y);
+      pdf.setTextColor(211, 47, 47);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Outstanding', margin + 60, y);
+      pdf.setTextColor(0, 0, 0);
+      y += 7;
+    } else {
+      addField(
+        'Safety Documents',
+        data.level
+      );
+    }
 
 
     addField(
