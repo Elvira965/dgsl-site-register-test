@@ -1052,3 +1052,31 @@ canvas.signature-active {
     font-size: 16px;
   }
 }
+
+
+/* ============================================================
+   FIXED VERSION BAR
+   ============================================================ */
+
+.version-bar {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 12px;
+  background: #1f4e78;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: .2px;
+}
+
+body {
+  padding-bottom: 28px;
+}

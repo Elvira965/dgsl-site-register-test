@@ -82,8 +82,8 @@ function updateAuthUi() {
   });
 
   const deleteButton = document.getElementById('delete');
-  if (deleteButton && !currentUser) {
-    deleteButton.style.display = 'none';
+  if (deleteButton) {
+    deleteButton.style.display = currentUser ? '' : 'none';
   }
 
   const exportButton = document.getElementById('export');
@@ -96,6 +96,10 @@ function updateAuthUi() {
   if (importLabel) {
     importLabel.style.display = currentUser ? '' : 'none';
   }
+
+  document.querySelectorAll('.week-change').forEach(element => {
+    element.style.display = currentUser ? '' : 'none';
+  });
 }
 
 function showAuthDialog() {
@@ -113,9 +117,6 @@ function showAuthDialog() {
         <div style="font-size:20px;font-weight:700;margin-bottom:16px;">
           DGSL Site Register Login
         </div>
-        <label style="display:block;margin-bottom:6px;font-weight:600;">Email</label>
-        <input id="dgslLoginEmail" type="email" autocomplete="email"
-          style="width:100%;box-sizing:border-box;margin-bottom:12px;">
         <label style="display:block;margin-bottom:6px;font-weight:600;">Password</label>
         <input id="dgslLoginPassword" type="password" autocomplete="current-password"
           style="width:100%;box-sizing:border-box;margin-bottom:12px;">
@@ -132,12 +133,12 @@ function showAuthDialog() {
     authDialog.querySelector('#dgslLoginCancel').onclick = () => authDialog.close();
 
     authDialog.querySelector('#dgslLoginSubmit').onclick = async () => {
-      const email = authDialog.querySelector('#dgslLoginEmail').value.trim();
+      const email = 'elvira@dgsl.ie';
       const password = authDialog.querySelector('#dgslLoginPassword').value;
       const status = authDialog.querySelector('#dgslAuthStatus');
 
       if (!email || !password) {
-        status.textContent = 'Please enter your email and password.';
+        status.textContent = 'Please enter your password.';
         return;
       }
 
@@ -518,13 +519,13 @@ async function loadRecords() {
 function setupRealtime() {
 
   supabaseClient
-    .channel('handovers-live')
+    .channel('handovers-test-live')
     .on(
       'postgres_changes',
       {
         event: '*',
         schema: 'public',
-        table: 'handovers'
+        table: 'handovers_test'
       },
       async () => {
 
@@ -1043,6 +1044,12 @@ function showRowActionDialog(id) {
     dialog.style.borderRadius = '12px';
     dialog.style.maxWidth = '340px';
     dialog.style.width = 'calc(100% - 32px)';
+    dialog.style.height = 'auto';
+    dialog.style.minHeight = '0';
+    dialog.style.maxHeight = 'none';
+    dialog.style.margin = 'auto';
+    dialog.style.boxSizing = 'border-box';
+    dialog.style.overflow = 'visible';
 
     document.body.appendChild(dialog);
   }
@@ -1050,7 +1057,7 @@ function showRowActionDialog(id) {
   // Rebuild the popup every time it is opened so the available
   // actions always match the current login state.
   dialog.innerHTML = `
-    <div style="padding:22px; text-align:center;">
+    <div style="padding:22px; text-align:center; height:auto; min-height:0; max-height:none; box-sizing:border-box;">
       <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
         What would you like to do?
       </div>
