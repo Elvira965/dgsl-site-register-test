@@ -1080,3 +1080,25 @@ canvas.signature-active {
 body {
   padding-bottom: 28px;
 }
+
+/* Compact row-action popup: keep it separate from the large handover form dialog. */
+#rowActionDialog {
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: min(340px, calc(100vw - 32px)) !important;
+  height: fit-content !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: auto !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+#rowActionDialog > div {
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  box-sizing: border-box !important;
+}
