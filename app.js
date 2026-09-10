@@ -21,9 +21,19 @@ let records = [];
 let editing = null;
 let filter = 'All';
 
-const SITE_VERSION = '1.2.1';
+const SITE_VERSION = '1.2.2';
 const NOTIFICATIONS_TABLE = 'site_notifications_test';
 const NOTIFICATIONS_SEEN_KEY = 'dgsl_site_register_test_notifications_seen_v1';
+
+// Single source of truth for the website version.
+// Change SITE_VERSION here only. All visible version labels update automatically.
+function applySiteVersion() {
+  document.querySelectorAll('[data-site-version]').forEach(element => {
+    element.textContent = SITE_VERSION;
+  });
+}
+
+applySiteVersion();
 
 const $ = s => document.querySelector(s);
 
