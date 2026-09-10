@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f4e78">
-<title>DGSL Site Register — TEST</title>
+<title>DGSL Site Register</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -28,9 +28,27 @@
 
   </div>
 
-  <button id="newZone" class="primary">
-    + New handover
-  </button>
+  <div class="header-actions" id="headerActions">
+    <button id="newZone" class="primary">+ New handover</button>
+
+    <div class="header-icon-group">
+      <button id="notificationsButton" class="header-icon-button" type="button" aria-label="Notifications" title="Notifications" style="display:none;">
+        <span class="header-icon-wrap">
+          <svg class="header-svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+          </svg>
+          <span id="notificationBadge" class="notification-badge" hidden>0</span>
+        </span>
+      </button>
+      <button id="settingsButton" class="header-icon-button" type="button" aria-label="Settings" title="Settings" style="display:none;">
+        <svg class="header-svg-icon header-settings-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#111" stroke="none" d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65-2-3.46-2.49 1a7.8 7.8 0 0 0-1.69-.98L15 3h-4l-.38 2.93c-.6.25-1.17.58-1.69.98l-2.49-1-2 3.46 2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65 2 3.46 2.49-1c.52.4 1.09.73 1.69.98L11 21h4l.38-2.93c.6-.25 1.17-.58 1.69-.98l2.49 1 2-3.46-2.13-1.65Z"/>
+          <circle cx="13" cy="12" r="3.2" fill="#fff"/>
+        </svg>
+      </button>
+    </div>
+  </div>
 
 </header>
 
@@ -156,6 +174,44 @@
 
 </main>
 
+
+<dialog id="changeLogDialog" aria-labelledby="changeLogTitle">
+  <div class="changelog-inner">
+    <button type="button" class="changelog-close" id="closeChangeLog" aria-label="Close change log">×</button>
+    <div class="changelog-header">
+      <div class="changelog-kicker">DGSL SITE REGISTER</div>
+      <h2 id="changeLogTitle">Change Log</h2>
+      <p>A simple overview of the main improvements made to the site.</p>
+    </div>
+    <div class="changelog-list">
+      <section class="changelog-entry current">
+        <div class="changelog-version">1.2.1 <span>Current</span></div>
+        <ul>
+          <li>Improved handover copying, including a clear red marking for copied handovers until they are edited and saved.</li>
+          <li>Handovers are listed by Handover Date, newest first.</li>
+          <li>Added photo viewing with an in-page viewer and photo zoom without opening a new tab.</li>
+          <li>Improved the PDF viewer, signatures, site photos and Take Back details.</li>
+          <li>Improved status handling, including Open, Closed and On Hold with matching colours.</li>
+          <li>Added dashboard totals and weekly changes.</li>
+          <li>Improved mobile and tablet usability, including safer signature pads and clearer date fields.</li>
+        </ul>
+      </section>
+      <section class="changelog-entry">
+        <div class="changelog-version">Earlier development</div>
+        <ul>
+          <li>Built the DGSL Site Register around Supabase for storing handovers and site photos.</li>
+          <li>Added secure login and restricted editing, creating and deleting to authorised users.</li>
+          <li>Added search, status filters, PDF generation, PDF download and data export/import.</li>
+          <li>Added Handover and Take Back information, housekeeping, notes and signatures.</li>
+          <li>Added site-photo upload, removal and PDF photo inclusion.</li>
+          <li>Added copy, edit and view actions for individual handovers.</li>
+          <li>Continued improving the layout and behaviour across computer, tablet and phone.</li>
+        </ul>
+      </section>
+    </div>
+    <div class="changelog-footer">Version 1.2.1</div>
+  </div>
+</dialog>
 
 <dialog id="pdfDialog">
 
@@ -290,7 +346,7 @@
 
       <input
         name="drawing"
-        placeholder="Drawing number"
+        placeholder="e.g. Type G"
       >
 
     </label>
@@ -303,7 +359,7 @@
       <input
         name="zone"
         required
-        placeholder="e.g. Apartment 201"
+        placeholder="e.g. Zone A"
       >
 
     </label>
@@ -729,6 +785,14 @@
       Bad
     </option>
 
+    <option value="80%">
+      80%
+    </option>
+
+    <option value="90%">
+      90%
+    </option>
+
     <option value="N/A">
       N/A
     </option>
@@ -873,7 +937,7 @@
     <div class="wide">
 
       <p>
-        <strong>DGSL representative</strong>
+        <strong></strong>
       </p>
 
     </div>
@@ -963,7 +1027,7 @@
 
 
 <div class="version-bar" aria-label="Website version">
-  DGSL Site Register · Version 2.1
+  DGSL Site Register · Version 1.2.1
 </div>
 
 </body>

@@ -546,6 +546,12 @@ td small {
 
 }
 
+/* Keep the register dates neat and on one line. */
+td.table-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 
 /* Keep Edit and View headings and their cells centered over the controls. */
 th:nth-child(7),
@@ -1081,24 +1087,471 @@ body {
   padding-bottom: 28px;
 }
 
-/* Compact row-action popup: keep it separate from the large handover form dialog. */
+/* ============================================================
+   ROW ACTION POPUP — COMPACT ON ALL DEVICES
+   ============================================================ */
+
 #rowActionDialog {
-  width: fit-content !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(340px, calc(100vw - 32px)) !important;
   min-width: 0 !important;
   max-width: min(340px, calc(100vw - 32px)) !important;
-  height: fit-content !important;
-  min-height: 0 !important;
-  max-height: none !important;
+  height: 190px !important;
+  min-height: 190px !important;
+  max-height: 190px !important;
   padding: 0 !important;
-  margin: auto !important;
+  margin: 0 !important;
   box-sizing: border-box !important;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 #rowActionDialog > div {
-  width: auto !important;
+  width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
-  max-height: none !important;
+  max-height: 240px !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* ============================================================
+   FORM DIALOG — SHORTER WINDOW + INTERNAL SCROLL
+   ============================================================ */
+
+#formDialog {
+  width: min(950px, 94vw) !important;
+  max-width: 950px !important;
+  height: 82vh !important;
+  max-height: 82vh !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+}
+
+#handoverForm {
+  height: 82vh !important;
+  max-height: 82vh !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  box-sizing: border-box !important;
+}
+
+/* Make the iPhone/iPad date field the same compact height as the other fields. */
+#handoverForm input[type="date"] {
+  width: 100% !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 6px 10px !important;
+  margin-top: 6px !important;
+  box-sizing: border-box !important;
+  font-size: 16px !important;
+  line-height: 20px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Keep the page behind the form from participating in touch scrolling. */
+body.form-dialog-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+
+/* Light red background for copied handovers until they are edited and saved. */
+tr.copied-handover-row td {
+  background: #ffd6d6 !important;
+}
+
+
+/* ============================================================
+   PDF VIEWER — SAME COMPACT SIZE AS HANDOVER FORM
+   ============================================================ */
+
+#pdfDialog {
+  width: min(950px, 94vw) !important;
+  max-width: 950px !important;
+  height: 82vh !important;
+  max-height: 82vh !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+}
+
+#pdfDialog > div {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+#pdfViewer {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+}
+
+html.pdf-dialog-open,
+body.pdf-dialog-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+/* Keep the fixed version bar stable during mobile scrolling without a transform. */
+.version-bar {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  will-change: auto !important;
+  contain: layout paint style;
+}
+
+
+/* ============================================================
+   SITE PHOTO VIEWER
+   ============================================================ */
+
+#photoViewerDialog {
+  width: min(900px, 92vw) !important;
+  max-width: 900px !important;
+  max-height: 88vh !important;
+  padding: 12px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  background: #111 !important;
+  overflow: hidden !important;
+}
+
+#photoViewerDialog::backdrop {
+  background: rgba(0,0,0,.75) !important;
+}
+
+.photo-viewer-inner {
+  position: relative;
+  width: 100%;
+  max-height: calc(88vh - 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-viewer-image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(88vh - 24px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.photo-viewer-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  padding: 0 !important;
+  border-radius: 50%;
+  font-size: 25px;
+  line-height: 32px;
+  background: #d32f2f;
+  color: #fff;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+/* FINAL FOOTER VERSION BAR: document bottom, not viewport-fixed. */
+html, body {
+  min-height: 100%;
+}
+
+/* Keep the footer at the true bottom of the document.
+   Short lists still create a small amount of page height below the viewport,
+   so the footer is reached by scrolling to the bottom rather than floating
+   on the screen. */
+body {
+  min-height: calc(100vh + 28px);
+  padding-bottom: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+.version-bar {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  top: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  width: 100% !important;
+  flex: 0 0 28px;
+  height: 28px !important;
+  margin: 0 !important;
+  z-index: 1000;
+}
+
+/* Keep the photo viewer centered and lock the page behind it. */
+#photoViewerDialog {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(900px, 92vw) !important;
+  max-width: 900px !important;
+  height: auto !important;
+  max-height: 88vh !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+#photoViewerDialog .photo-viewer-inner {
+  touch-action: none !important;
+  overflow: hidden !important;
+}
+
+/* On desktop, size the viewer to the photo so portrait photos do not get
+   large empty black bands at the left and right. */
+@media (min-width: 801px) {
+  #photoViewerDialog {
+    width: fit-content !important;
+    max-width: 92vw !important;
+  }
+
+  #photoViewerDialog .photo-viewer-inner {
+    width: auto !important;
+    max-width: calc(92vw - 24px) !important;
+  }
+
+  #photoViewerDialog .photo-viewer-image {
+    max-width: calc(92vw - 24px) !important;
+  }
+}
+
+#photoViewerDialog .photo-viewer-image {
+  touch-action: none !important;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center center;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+html.photo-viewer-open,
+body.photo-viewer-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+
+
+/* ============================================================
+   MOBILE PAGE SCALE / LAYOUT RESTORE
+   ============================================================ */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 800px) {
+  .cards {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+
+  .cards article {
+    min-width: 0;
+  }
+
+  main {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Keep the page itself fixed to the tablet viewport.
+   Only the handover table is allowed to scroll horizontally. */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+header {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+header > div:first-child {
+  min-width: 0 !important;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.header-actions {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+main {
+  width: 100%;
+  max-width: 1500px;
+  min-width: 0;
+}
+
+.panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+}
+
+/* ============================================================\n   HEADER SETTINGS + NOTIFICATIONS — final positioning\n   ============================================================ */\n.header-actions { display:flex; align-items:center; gap:12px; margin-left:auto; }\n.header-icon-group { display:flex; align-items:center; gap:4px; margin-left:28px; }\n.header-icon-button { position:relative; width:42px; height:42px; padding:6px !important; border:0 !important; background:transparent !important; color:#111 !important; display:inline-flex; align-items:center; justify-content:center; }\n.header-icon-button:hover { background:#f1f5f8 !important; }\n.header-svg-icon { width:27px; height:27px; fill:none; stroke:#111; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }\n.header-icon-wrap { position:relative; display:inline-flex; }\n.notification-badge { position:absolute; top:-6px; right:-8px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#2f80ed; color:#fff; font-size:10px; font-weight:700; line-height:17px; text-align:center; border:1px solid #fff; }\n.auth-button { background:#008e39 !important; color:#fff !important; border-color:#008e39 !important; }\n.header-settings-dialog { width:min(380px, calc(100vw - 32px)) !important; max-width:380px !important; padding:0 !important; border:0 !important; border-radius:12px !important; overflow:hidden !important; }\n.header-dialog-inner { padding:22px; }\n.header-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:15px; padding-bottom:15px; border-bottom:1px solid #e0e5e9; }\n.header-dialog-head h2 { color:#1f4e78; }\n.settings-options { display:grid; gap:10px; padding-top:18px; }\n.settings-option { width:100%; text-align:left; padding:12px 14px; background:#fff; }\n.settings-logout { color:#b42318; }\n.notifications-empty { padding:22px 4px 5px; color:#68737d; }\n.version-bar { cursor:default !important; }\n@media (max-width:800px) {\n  header { flex-direction:column !important; align-items:stretch !important; }\n  .header-actions { width:100%; margin-left:0; justify-content:flex-start; }\n  .header-icon-group { margin-left:auto; }\n  .header-icon-button { width:40px; height:40px; }\n  .header-svg-icon { width:25px; height:25px; }\n}\n
+
+/* ============================================================
+   VERSION BAR / CHANGE LOG
+   ============================================================ */
+button.version-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  cursor: default;
+  font-family: inherit;
+  text-align: center;
+}
+#changeLogDialog {
+  width: min(720px, calc(100vw - 32px)) !important;
+  max-width: 720px !important;
+  max-height: min(760px, calc(100vh - 40px)) !important;
+  margin: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  color: #243447;
+}
+#changeLogDialog {
+  width: min(950px, 94vw) !important;
+  max-width: 950px !important;
+  height: 82vh !important;
+  max-height: 82vh !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+}
+
+#changeLogDialog::backdrop { background: rgba(15,31,45,.62) !important; }
+
+.changelog-inner {
+  position: relative;
+  height: 82vh;
+  max-height: 82vh;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+html.change-log-open,
+body.change-log-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.changelog-header { padding:26px 30px 20px; background:#f5f8fb; border-bottom:1px solid #dbe3ea; }
+.changelog-kicker { font-size:11px; font-weight:700; letter-spacing:1.2px; color:#1f4e78; margin-bottom:5px; }
+.changelog-header h2 { margin:0 0 6px; font-size:28px; color:#162b3d; }
+.changelog-header p { margin:0; font-size:14px; color:#607080; }
+.changelog-close { position:absolute; top:16px; right:18px; z-index:3; width:38px; height:38px; padding:0 !important; border:0 !important; border-radius:50%; background:#e9eef3; color:#34495a; font-size:25px; line-height:36px; cursor:pointer; }
+.changelog-list { padding:22px 30px 8px; }
+.changelog-entry { padding:0 0 20px; margin:0 0 20px; border-bottom:1px solid #e1e7ec; }
+.changelog-entry:last-child { border-bottom:0; margin-bottom:0; }
+.changelog-version { font-size:18px; font-weight:700; color:#1f4e78; margin-bottom:10px; }
+.changelog-version span { display:inline-block; margin-left:7px; padding:3px 8px; border-radius:999px; background:#7acb8a; color:#173a23; font-size:11px; font-weight:700; vertical-align:2px; }
+.changelog-entry ul { margin:0; padding-left:22px; }
+.changelog-entry li { margin:0 0 8px; line-height:1.45; font-size:14px; }
+.changelog-footer { padding:13px 30px 17px; border-top:1px solid #e1e7ec; text-align:center; font-size:12px; color:#71808d; }
+
+/* Header controls */
+.header-actions { display:flex; align-items:center; gap:12px; margin-left:auto; }
+.header-icon-group { display:flex; align-items:center; gap:4px; margin-left:28px; }
+.header-icon-button { position:relative; width:42px; height:42px; padding:6px !important; border:0 !important; background:transparent !important; color:#111 !important; display:inline-flex; align-items:center; justify-content:center; }
+.header-icon-button:hover { background:#f1f5f8 !important; }
+.header-svg-icon { width:27px; height:27px; fill:none; stroke:#111; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
+.header-settings-icon { width:29px; height:29px; }
+.header-icon-wrap { position:relative; display:inline-flex; }
+.notification-badge { position:absolute; top:-6px; right:-8px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#2f80ed; color:#fff; font-size:10px; font-weight:700; line-height:17px; text-align:center; border:1px solid #fff; }
+.auth-button { background:#008e39 !important; color:#fff !important; border-color:#008e39 !important; }
+.header-settings-dialog { width:min(380px, calc(100vw - 32px)) !important; max-width:380px !important; padding:0 !important; border:0 !important; border-radius:12px !important; overflow:hidden !important; }
+.header-dialog-inner { padding:22px; }
+.header-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:15px; padding-bottom:15px; border-bottom:1px solid #e0e5e9; }
+.header-dialog-head h2 { color:#1f4e78; }
+.settings-options { display:grid; gap:10px; padding-top:18px; }
+.settings-option { width:100%; text-align:left; padding:12px 14px; background:#fff; }
+.settings-logout { color:#b42318; }
+.notifications-empty { padding:22px 4px 5px; color:#68737d; }
+.version-bar { cursor:default !important; }
+
+@media (max-width:800px) {
+  header { flex-direction:column !important; align-items:stretch !important; }
+  .header-actions { width:100%; margin-left:0; justify-content:flex-start; }
+  .header-icon-group { margin-left:auto; }
+  .header-icon-button { width:40px; height:40px; }
+  .header-svg-icon { width:25px; height:25px; }
+  .header-settings-icon { width:27px; height:27px; }
+}
+@media (max-width:700px) {
+  html { -webkit-text-size-adjust:100%; }
+  .changelog-header,.changelog-list { padding-left:20px; padding-right:20px; }
 }

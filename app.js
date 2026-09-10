@@ -30,49 +30,52 @@ const form = $('#handoverForm');
 let currentUser = null;
 let authDialog = null;
 
-const today = () =>
-  new Date().toISOString().slice(0, 10);
+const today = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 // ============================================================
 // AUTHENTICATION UI
 // ============================================================
 
 function ensureAuthUi() {
-  if (document.getElementById('dgslAuthButton')) return;
+  const headerActions = document.getElementById('headerActions');
+  if (!headerActions) return;
 
-  const button = document.createElement('button');
-  button.id = 'dgslAuthButton';
-  button.type = 'button';
-  button.textContent = 'Login';
-  button.style.marginLeft = '8px';
-  button.style.background = '#008e39';
-  button.style.color = '#fff';
-  button.style.borderColor = '#008e39';
-
-  button.onclick = async () => {
-    if (currentUser) {
-      await supabaseClient.auth.signOut();
-    } else {
-      showAuthDialog();
-    }
-  };
-
-  const newButton = document.getElementById('newZone');
-  if (newButton && newButton.parentNode) {
-    newButton.parentNode.insertBefore(button, newButton.nextSibling);
-  } else {
-    document.body.appendChild(button);
+  let button = document.getElementById('dgslAuthButton');
+  if (!button) {
+    button = document.createElement('button');
+    button.id = 'dgslAuthButton';
+    button.type = 'button';
+    button.textContent = 'Login';
+    button.className = 'auth-button';
+    button.onclick = () => showAuthDialog();
+    headerActions.appendChild(button);
   }
+
+  const notificationsButton = document.getElementById('notificationsButton');
+  const settingsButton = document.getElementById('settingsButton');
+  if (notificationsButton) notificationsButton.onclick = openNotificationsDialog;
+  if (settingsButton) settingsButton.onclick = openSettingsDialog;
 
   updateAuthUi();
 }
-
 function updateAuthUi() {
   const button = document.getElementById('dgslAuthButton');
   if (button) button.textContent = currentUser ? 'Logout' : 'Login';
 
   const newButton = document.getElementById('newZone');
   if (newButton) newButton.style.display = currentUser ? '' : 'none';
+
+  const notificationsButton = document.getElementById('notificationsButton');
+  const settingsButton = document.getElementById('settingsButton');
+  if (notificationsButton) notificationsButton.style.display = currentUser ? '' : 'none';
+  if (settingsButton) settingsButton.style.display = currentUser ? '' : 'none';
+  if (button) button.style.display = currentUser ? 'none' : '';
 
   const editHeader = document.getElementById('editHeader');
   if (editHeader) editHeader.style.display = currentUser ? '' : 'none';
@@ -101,6 +104,67 @@ function updateAuthUi() {
     element.style.display = currentUser ? '' : 'none';
   });
 }
+
+function showLogoutConfirmDialog() {
+  let dialog = document.getElementById('dgslLogoutDialog');
+
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslLogoutDialog';
+    dialog.style.padding = '0';
+    dialog.style.border = '0';
+    dialog.style.borderRadius = '12px';
+    dialog.style.width = 'min(360px, calc(100% - 32px))';
+    dialog.style.maxWidth = '360px';
+    dialog.style.boxSizing = 'border-box';
+    dialog.style.margin = 'auto';
+    dialog.style.overflow = 'hidden';
+
+    dialog.innerHTML = `
+      <div style="padding:22px;text-align:center;box-sizing:border-box;">
+        <div style="font-size:20px;font-weight:700;margin-bottom:10px;">
+          Log out?
+        </div>
+        <div style="font-size:16px;margin-bottom:20px;">
+          Are you sure you want to log out?
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button type="button" id="dgslLogoutCancel">Cancel</button>
+          <button type="button" id="dgslLogoutConfirm" style="background:#008e39;color:#fff;border-color:#008e39;">Log out</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    dialog.querySelector('#dgslLogoutCancel').onclick = () => {
+      dialog.close();
+    };
+
+    dialog.querySelector('#dgslLogoutConfirm').onclick = async () => {
+      const confirmButton = dialog.querySelector('#dgslLogoutConfirm');
+      confirmButton.disabled = true;
+      confirmButton.textContent = 'Logging out...';
+
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        console.error('Logout error:', error);
+        confirmButton.disabled = false;
+        confirmButton.textContent = 'Log out';
+        alert('Unable to log out. Please try again.');
+        return;
+      }
+
+      dialog.close();
+    };
+  }
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
 
 function showAuthDialog() {
   if (!authDialog) {
@@ -417,7 +481,7 @@ function toDatabase(x) {
       x.status || null,
 
     handover:
-      null,
+      x.handover || null,
 
     handover_date:
       x.handoverDate || null,
@@ -542,6 +606,18 @@ function setupRealtime() {
 // HTML ESCAPE
 // ============================================================
 
+function formatTableDate(value) {
+  if (!value) return '—';
+
+  const text = String(value).slice(0, 10);
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) return String(value);
+
+  return `${match[3]}/${match[2]}/${match[1].slice(2)}`;
+}
+
+
 function formatDate(value) {
   if (!value) return '';
 
@@ -638,21 +714,27 @@ function render() {
       : '';
 
   const filtered =
-    records.filter(x =>
+    records
+      .filter(x =>
 
-      (
-        filter === 'All' ||
-        x.status === filter
+        (
+          filter === 'All' ||
+          x.status === filter
+        )
+
+        &&
+
+        Object.values(x)
+          .join(' ')
+          .toLowerCase()
+          .includes(q)
+
       )
-
-      &&
-
-      Object.values(x)
-        .join(' ')
-        .toLowerCase()
-        .includes(q)
-
-    );
+      .sort((a, b) => {
+        const aDate = String(a.handoverDate || '');
+        const bDate = String(b.handoverDate || '');
+        return bDate.localeCompare(aDate);
+      });
 
 
   $('#total').textContent =
@@ -715,7 +797,7 @@ function render() {
       .map(
         x => `
 
-        <tr data-row-id="${esc(x.id)}">
+        <tr class="${x.handover === 'COPY' ? 'copied-handover-row' : ''}" data-row-id="${esc(x.id)}">
 
           <td>
             <b>
@@ -749,12 +831,12 @@ function render() {
 
 </td>
 
-          <td>
-  ${esc(formatDate(x.handoverDate))}
+          <td class="table-date">
+  ${esc(formatTableDate(x.handoverDate))}
 </td>
 
-          <td>
-  ${esc(formatDate(x.takeBackDate))}
+          <td class="table-date">
+  ${esc(formatTableDate(x.takeBackDate))}
 </td>
 
 
@@ -930,11 +1012,43 @@ document
 
               }
 
-              $('#pdfDialog').showModal();
+              const pdfDialog = $('#pdfDialog');
+              const pdfInner = pdfDialog.querySelector(':scope > div');
+
+              // Match the handover form window exactly.
+              pdfDialog.style.width = 'min(950px, 94vw)';
+              pdfDialog.style.maxWidth = '950px';
+              pdfDialog.style.height = '82vh';
+              pdfDialog.style.maxHeight = '82vh';
+              pdfDialog.style.minHeight = '0';
+              pdfDialog.style.padding = '0';
+              pdfDialog.style.overflow = 'hidden';
+              pdfDialog.style.boxSizing = 'border-box';
+
+              if (pdfInner) {
+                pdfInner.style.height = '100%';
+                pdfInner.style.maxHeight = 'none';
+                pdfInner.style.minHeight = '0';
+                pdfInner.style.overflow = 'hidden';
+                pdfInner.style.boxSizing = 'border-box';
+              }
+
+              viewer.style.height = 'auto';
+              viewer.style.minHeight = '0';
+              viewer.style.overflowY = 'auto';
+              viewer.style.overflowX = 'hidden';
+              viewer.style.overscrollBehavior = 'contain';
+              viewer.style.touchAction = 'pan-y';
+
+              lockPdfDialogBackground();
+              document.documentElement.classList.add('pdf-dialog-open');
+              pdfDialog.showModal();
 
             } catch (error) {
 
               console.error(error);
+
+              unlockPdfDialogBackground();
 
               alert(
                 'Unable to generate the PDF.'
@@ -1019,6 +1133,22 @@ document
 // WHOLE-ROW ACTION POPUP
 // ============================================================
 
+function lockFormDialogBackground() {
+  document.body.classList.add('form-dialog-open');
+}
+
+function unlockFormDialogBackground() {
+  document.body.classList.remove('form-dialog-open');
+}
+
+function lockPdfDialogBackground() {
+  document.body.classList.add('pdf-dialog-open');
+}
+
+function unlockPdfDialogBackground() {
+  document.body.classList.remove('pdf-dialog-open');
+}
+
 function showRowActionDialog(id) {
 
   const record =
@@ -1049,7 +1179,18 @@ function showRowActionDialog(id) {
     dialog.style.maxHeight = 'none';
     dialog.style.margin = 'auto';
     dialog.style.boxSizing = 'border-box';
-    dialog.style.overflow = 'visible';
+    dialog.style.overflow = 'hidden';
+
+    dialog.style.setProperty('position', 'fixed', 'important');
+    dialog.style.setProperty('top', '50%', 'important');
+    dialog.style.setProperty('left', '50%', 'important');
+    dialog.style.setProperty('right', 'auto', 'important');
+    dialog.style.setProperty('bottom', 'auto', 'important');
+    dialog.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+    dialog.style.setProperty('width', 'min(340px, calc(100vw - 32px))', 'important');
+    dialog.style.setProperty('height', '190px', 'important');
+    dialog.style.setProperty('min-height', '190px', 'important');
+    dialog.style.setProperty('max-height', '190px', 'important');
 
     document.body.appendChild(dialog);
   }
@@ -1120,10 +1261,6 @@ function showRowActionDialog(id) {
   if (rowDownloadButton) {
     rowDownloadButton.onclick =
       async () => {
-        if (!currentUser) {
-          // Download is available to logged-out users too.
-        }
-
         dialog.close();
 
         try {
@@ -1141,24 +1278,14 @@ function showRowActionDialog(id) {
 
   if (rowCopyButton) {
     rowCopyButton.onclick =
-      async () => {
+      () => {
         if (!currentUser) {
           dialog.close();
           return;
         }
 
         dialog.close();
-
-        try {
-          rowCopyButton.disabled = true;
-          await copyHandover(record);
-        } catch (error) {
-          console.error('Copy handover error:', error);
-          alert(
-            'There was a problem copying the handover.\n\n' +
-            error.message
-          );
-        }
+        setTimeout(() => showCopyConfirmDialog(record), 0);
       };
   }
 
@@ -1740,7 +1867,10 @@ otherField.style.display =
   }
 
 
-  if (showDialog) dlg.showModal();
+  if (showDialog) {
+    lockFormDialogBackground();
+    dlg.showModal();
+  }
 
 }
 
@@ -1761,7 +1891,10 @@ $('#newZone').onclick =
 
 $('#cancel').onclick =
 $('#cancel2').onclick =
-  () => dlg.close();
+  () => {
+    unlockFormDialogBackground();
+    dlg.close();
+  };
 
 
 // ============================================================
@@ -2049,6 +2182,11 @@ for (
 }
 
 
+      // A copied handover stays marked until it is actually edited and saved.
+      if (editing?.handover === 'COPY') {
+        x.handover = '';
+      }
+
       // ------------------------------------------------------
       // DATABASE RECORD
       // ------------------------------------------------------
@@ -2101,7 +2239,8 @@ for (
         await deletePhoto(url);
       }
 
-      dlg.close();
+      unlockFormDialogBackground();
+    dlg.close();
 
 
       await loadRecords();
@@ -2218,6 +2357,67 @@ async function copyPhotoForHandover(
 }
 
 
+function showCopyConfirmDialog(record) {
+
+  let dialog = document.getElementById('dgslCopyConfirmDialog');
+
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslCopyConfirmDialog';
+    dialog.style.padding = '0';
+    dialog.style.border = '0';
+    dialog.style.borderRadius = '12px';
+    dialog.style.width = 'min(360px, calc(100vw - 32px))';
+    dialog.style.maxWidth = '360px';
+    dialog.style.boxSizing = 'border-box';
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div style="padding:22px;text-align:center;box-sizing:border-box;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:10px;">
+        Create a copy?
+      </div>
+      <div style="font-size:15px;line-height:1.4;margin-bottom:20px;">
+        Are you sure you want to create a copy of this handover?
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button type="button" id="copyConfirmCancel">Cancel</button>
+        <button type="button" id="copyConfirmYes" class="primary">Create copy</button>
+      </div>
+    </div>
+  `;
+
+  dialog.querySelector('#copyConfirmCancel').onclick =
+    () => dialog.close();
+
+  dialog.querySelector('#copyConfirmYes').onclick =
+    async () => {
+      const confirmButton = dialog.querySelector('#copyConfirmYes');
+      confirmButton.disabled = true;
+      confirmButton.textContent = 'Creating...';
+
+      try {
+        await copyHandover(record);
+        dialog.close();
+      } catch (error) {
+        console.error('Copy handover error:', error);
+        alert(
+          'There was a problem copying the handover.\n\n' +
+          error.message
+        );
+        confirmButton.disabled = false;
+        confirmButton.textContent = 'Create copy';
+      }
+    };
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+
+}
+
+
 async function copyHandover(record) {
 
   if (!currentUser) {
@@ -2240,7 +2440,9 @@ async function copyHandover(record) {
     const copiedRecord = {
       ...record,
       id: newId,
-      photos: copiedPhotos
+      handoverDate: today(),
+      photos: copiedPhotos,
+      handover: 'COPY'
     };
 
     const databaseRecord =
@@ -2377,6 +2579,9 @@ function showSavedPhotos(
     img.style.objectFit = 'cover';
     img.style.borderRadius = '6px';
     img.style.border = '1px solid #ccc';
+    img.style.cursor = 'pointer';
+    img.title = 'Click to view photo';
+    img.onclick = () => openPhotoViewer(url);
 
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -2406,6 +2611,112 @@ function showSavedPhotos(
     wrapper.appendChild(remove);
     preview.appendChild(wrapper);
   });
+}
+
+
+// ============================================================
+// PHOTO VIEWER
+// ============================================================
+
+function openPhotoViewer(url) {
+
+  let dialog = document.getElementById('photoViewerDialog');
+
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'photoViewerDialog';
+    dialog.innerHTML = `
+      <div class="photo-viewer-inner">
+        <button type="button" class="photo-viewer-close" aria-label="Close">×</button>
+        <img class="photo-viewer-image" alt="Site photo" draggable="false">
+      </div>
+    `;
+    document.body.appendChild(dialog);
+
+    dialog.querySelector('.photo-viewer-close').onclick = () => dialog.close();
+    dialog.addEventListener('click', e => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    // Zoom the photo itself rather than allowing the browser to zoom the page.
+    const image = dialog.querySelector('.photo-viewer-image');
+    const state = { scale: 1, pointers: new Map(), pinchDistance: 0, pinchScale: 1 };
+
+    const applyZoom = () => {
+      const scale = Math.max(1, Math.min(5, state.scale));
+      state.scale = scale;
+      image.style.transform = `translate3d(0, 0, 0) scale(${scale})`;
+    };
+
+    const distance = (a, b) =>
+      Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+    image.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      image.setPointerCapture?.(e.pointerId);
+      state.pointers.set(e.pointerId, e);
+      if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()];
+        state.pinchDistance = distance(pts[0], pts[1]);
+        state.pinchScale = state.scale;
+      }
+    });
+
+    image.addEventListener('pointermove', e => {
+      if (!state.pointers.has(e.pointerId)) return;
+      e.preventDefault();
+      state.pointers.set(e.pointerId, e);
+      if (state.pointers.size === 2 && state.pinchDistance > 0) {
+        const pts = [...state.pointers.values()];
+        const ratio = distance(pts[0], pts[1]) / state.pinchDistance;
+        state.scale = state.pinchScale * ratio;
+        applyZoom();
+      }
+    });
+
+    const releasePointer = e => {
+      state.pointers.delete(e.pointerId);
+      if (state.pointers.size < 2) {
+        state.pinchDistance = 0;
+      }
+    };
+    image.addEventListener('pointerup', releasePointer);
+    image.addEventListener('pointercancel', releasePointer);
+    image.addEventListener('pointerleave', e => {
+      if (state.pointers.size < 2) releasePointer(e);
+    });
+
+    image.addEventListener('wheel', e => {
+      e.preventDefault();
+      state.scale += e.deltaY < 0 ? 0.25 : -0.25;
+      applyZoom();
+    }, { passive: false });
+
+    dialog.addEventListener('close', () => {
+      state.scale = 1;
+      state.pointers.clear();
+      state.pinchDistance = 0;
+      image.style.transform = 'translate3d(0, 0, 0) scale(1)';
+    });
+  }
+
+  const image = dialog.querySelector('.photo-viewer-image');
+  image.src = url;
+
+  document.documentElement.classList.add('photo-viewer-open');
+  document.body.classList.add('photo-viewer-open');
+
+  if (!dialog.dataset.lockWired) {
+    dialog.addEventListener('close', () => {
+      document.documentElement.classList.remove('photo-viewer-open');
+      document.body.classList.remove('photo-viewer-open');
+    });
+    dialog.dataset.lockWired = '1';
+  }
+
+  if (!dialog.open) {
+    dialog.showModal();
+  }
 }
 
 
@@ -2471,7 +2782,8 @@ $('#delete').onclick =
       }
 
 
-      dlg.close();
+      unlockFormDialogBackground();
+    dlg.close();
 
 
       await loadRecords();
@@ -2893,51 +3205,28 @@ function drawSavedSignature(
   dataUrl
 ) {
 
-  if (
-    !canvas ||
-    !dataUrl
-  ) {
-
-    return;
-
+  if (!canvas || !dataUrl) {
+    if (canvas) canvas._signatureReady = Promise.resolve();
+    return Promise.resolve();
   }
 
+  const ctx = canvas.getContext('2d');
 
-  const ctx =
-    canvas.getContext(
-      '2d'
-    );
+  const ready = new Promise((resolve, reject) => {
+    const img = new Image();
 
-
-  const img =
-    new Image();
-
-
-  img.onload =
-    () => {
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      ctx.drawImage(
-        img,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve();
     };
 
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
 
-  img.src =
-    dataUrl;
-
+  canvas._signatureReady = ready;
+  return ready;
 }
 
 
@@ -3252,6 +3541,11 @@ async function generatePdf(viewOnly = false) {
 
 
 
+
+    await Promise.all([
+      $('#contractorSignature')?._signatureReady,
+      $('#dgslSignature')?._signatureReady
+    ].filter(Boolean));
 
     const data = {
   zone: form.elements.zone?.value || '',
@@ -4495,7 +4789,76 @@ startApp();
 
 
 
+// Prevent iOS touch scrolling from leaking out of the PDF viewer.
+document.addEventListener(
+  'touchmove',
+  event => {
+    if (!document.body.classList.contains('pdf-dialog-open')) return;
+
+    const viewer = document.getElementById('pdfViewer');
+    if (viewer && viewer.contains(event.target)) return;
+
+    event.preventDefault();
+  },
+  { passive: false }
+);
+
+
 // ============================================================
+// ============================================================
+// SETTINGS + NOTIFICATIONS
+// ============================================================
+function openSettingsDialog() {
+  let dialog = document.getElementById('settingsDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'settingsDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head"><h2>Settings</h2><button type="button" class="icon" id="closeSettings">×</button></div>
+        <div class="settings-options">
+          <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
+          <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
+        </div>
+      </div>`;
+    document.body.appendChild(dialog);
+    dialog.querySelector('#closeSettings').onclick = () => dialog.close();
+    dialog.querySelector('#settingsChangeLog').onclick = () => { dialog.close(); openChangeLog(); };
+    dialog.querySelector('#settingsLogout').onclick = () => { dialog.close(); showLogoutConfirmDialog(); };
+  }
+  dialog.showModal();
+}
+
+function openNotificationsDialog() {
+  let dialog = document.getElementById('notificationsDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'notificationsDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `<div class="header-dialog-inner"><div class="header-dialog-head"><h2>Notifications</h2><button type="button" class="icon" id="closeNotifications">×</button></div><div class="notifications-empty">No new notifications.</div></div>`;
+    document.body.appendChild(dialog);
+    dialog.querySelector('#closeNotifications').onclick = () => dialog.close();
+  }
+  dialog.showModal();
+}
+
+function setNotificationCount(count) {
+  const badge = document.getElementById('notificationBadge');
+  if (!badge) return;
+  const n = Math.max(0, Number(count) || 0);
+  badge.textContent = n > 99 ? '99+' : String(n);
+  badge.hidden = n === 0;
+}
+
+function openChangeLog() {
+  const dialog = document.getElementById('changeLogDialog');
+  if (!dialog || dialog.open) return;
+  document.documentElement.classList.add('change-log-open');
+  document.body.classList.add('change-log-open');
+  dialog.showModal();
+}
+
 // PDF VIEWER CLOSE
 // ============================================================
 
@@ -4506,7 +4869,27 @@ $('#closePdf').onclick =
       $('#pdfDialog');
 
     pdfDialog.close();
+    unlockPdfDialogBackground();
+    document.documentElement.classList.remove('pdf-dialog-open');
 
     $('#pdfViewer').innerHTML = '';
 
   };
+// ============================================================
+// CHANGE LOG
+// ============================================================
+(function setupChangeLog() {
+  const dialog = document.getElementById('changeLogDialog');
+  const close = document.getElementById('closeChangeLog');
+  if (!dialog) return;
+  const shut = () => {
+    if (dialog.open) dialog.close();
+    document.documentElement.classList.remove('change-log-open');
+    document.body.classList.remove('change-log-open');
+  };
+  close?.addEventListener('click', shut);
+  dialog.addEventListener('close', () => {
+    document.documentElement.classList.remove('change-log-open');
+    document.body.classList.remove('change-log-open');
+  });
+})();;
