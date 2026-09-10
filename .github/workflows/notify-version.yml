@@ -1,0 +1,57 @@
+name: Create TEST version notification
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check whether website version changed
+        id: version_check
+        run: |
+          if git diff HEAD^ HEAD -- index.html | grep -qE 'Version [0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get website version
+        if: steps.version_check.outputs.version_changed == 'true'
+        id: version
+        run: |
+          VERSION=$(grep -oE 'Version [0-9]+\.[0-9]+\.[0-9]+' index.html | head -1 | sed 's/Version //')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create TEST notification
+        if: steps.version_check.outputs.version_changed == 'true'
+        env:
+          SUPABASE_URL: https://mgxbsxqgjxpdvdjsixqi.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          curl --fail-with-body \
+            -X POST \
+            "$SUPABASE_URL/rest/v1/site_notifications_test" \
+            -H "apikey: $SUPABASE_SECRET_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=ignore-duplicates,return=minimal" \
+            --data "$(jq -n \
+              --arg version "$VERSION" \
+              --arg title "Website updated" \
+              --arg message "A new version of the DGSL Site Register is available. Please refresh the website to load the latest version." \
+              '{version:$version,title:$title,message:$message}')"
