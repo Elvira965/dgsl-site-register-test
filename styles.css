@@ -1537,3 +1537,48 @@ body.change-log-open {
   html { -webkit-text-size-adjust:100%; }
   .changelog-header,.changelog-list { padding-left:20px; padding-right:20px; }
 }
+
+/* ============================================================
+   SITE NOTIFICATIONS
+   ============================================================ */
+.notifications-dialog {
+  width: min(520px, calc(100vw - 32px)) !important;
+  max-width: 520px !important;
+}
+.notifications-content {
+  padding-top: 18px;
+}
+.notifications-empty {
+  padding: 8px 4px 5px;
+  color: #68737d;
+}
+.site-notification-card {
+  border: 1px solid #dbe3ea;
+  border-radius: 10px;
+  padding: 16px;
+  background: #f8fafc;
+}
+.site-notification-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f4e78;
+  margin-bottom: 5px;
+}
+.site-notification-version {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8f1f8;
+  color: #1f4e78;
+  font-size: 12px;
+  font-weight: 700;
+}
+.site-notification-message {
+  color: #34495a;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+.site-notification-refresh {
+  width: 100%;
+}
