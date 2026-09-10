@@ -1342,24 +1342,6 @@ main {
   overflow: hidden !important;
 }
 
-/* On desktop, size the viewer to the photo so portrait photos do not get
-   large empty black bands at the left and right. */
-@media (min-width: 801px) {
-  #photoViewerDialog {
-    width: fit-content !important;
-    max-width: 92vw !important;
-  }
-
-  #photoViewerDialog .photo-viewer-inner {
-    width: auto !important;
-    max-width: calc(92vw - 24px) !important;
-  }
-
-  #photoViewerDialog .photo-viewer-image {
-    max-width: calc(92vw - 24px) !important;
-  }
-}
-
 #photoViewerDialog .photo-viewer-image {
   touch-action: none !important;
   transform: translate3d(0, 0, 0) scale(1);

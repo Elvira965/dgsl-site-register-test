@@ -53,29 +53,43 @@ function ensureAuthUi() {
     button.type = 'button';
     button.textContent = 'Login';
     button.className = 'auth-button';
-    button.onclick = () => showAuthDialog();
+    button.onclick = async () => {
+      if (currentUser) {
+        openSettingsDialog();
+      } else {
+        showAuthDialog();
+      }
+    };
     headerActions.appendChild(button);
   }
 
   const notificationsButton = document.getElementById('notificationsButton');
   const settingsButton = document.getElementById('settingsButton');
-  if (notificationsButton) notificationsButton.onclick = openNotificationsDialog;
-  if (settingsButton) settingsButton.onclick = openSettingsDialog;
+
+  if (notificationsButton) {
+    notificationsButton.onclick = () => openNotificationsDialog();
+  }
+  if (settingsButton) {
+    settingsButton.onclick = () => openSettingsDialog();
+  }
 
   updateAuthUi();
 }
+
 function updateAuthUi() {
   const button = document.getElementById('dgslAuthButton');
-  if (button) button.textContent = currentUser ? 'Logout' : 'Login';
-
   const newButton = document.getElementById('newZone');
-  if (newButton) newButton.style.display = currentUser ? '' : 'none';
-
   const notificationsButton = document.getElementById('notificationsButton');
   const settingsButton = document.getElementById('settingsButton');
+
+  if (button) {
+    button.textContent = currentUser ? 'Login' : 'Login';
+    button.style.display = currentUser ? 'none' : '';
+  }
+
+  if (newButton) newButton.style.display = currentUser ? '' : 'none';
   if (notificationsButton) notificationsButton.style.display = currentUser ? '' : 'none';
   if (settingsButton) settingsButton.style.display = currentUser ? '' : 'none';
-  if (button) button.style.display = currentUser ? 'none' : '';
 
   const editHeader = document.getElementById('editHeader');
   if (editHeader) editHeader.style.display = currentUser ? '' : 'none';
@@ -103,6 +117,94 @@ function updateAuthUi() {
   document.querySelectorAll('.week-change').forEach(element => {
     element.style.display = currentUser ? '' : 'none';
   });
+}
+
+function openSettingsDialog() {
+  let dialog = document.getElementById('dgslSettingsDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslSettingsDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head">
+          <div>
+            <p class="eyebrow">DGSL SITE REGISTER</p>
+            <h2>Settings</h2>
+          </div>
+          <button type="button" class="icon" id="closeSettings" aria-label="Close">×</button>
+        </div>
+        <div class="settings-options">
+          <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
+          <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+
+    dialog.querySelector('#closeSettings').onclick = () => dialog.close();
+    dialog.querySelector('#settingsChangeLog').onclick = () => {
+      dialog.close();
+      openChangeLogDialog();
+    };
+    dialog.querySelector('#settingsLogout').onclick = () => {
+      dialog.close();
+      showLogoutConfirmDialog();
+    };
+  }
+  if (!dialog.open) dialog.showModal();
+}
+
+function openNotificationsDialog() {
+  let dialog = document.getElementById('dgslNotificationsDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslNotificationsDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head">
+          <div>
+            <p class="eyebrow">DGSL SITE REGISTER</p>
+            <h2>Notifications</h2>
+          </div>
+          <button type="button" class="icon" id="closeNotifications" aria-label="Close">×</button>
+        </div>
+        <div class="notifications-empty">No new notifications.</div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+    dialog.querySelector('#closeNotifications').onclick = () => dialog.close();
+  }
+  if (!dialog.open) dialog.showModal();
+}
+
+function updateNotificationBadge(count = 0) {
+  const badge = document.getElementById('notificationBadge');
+  if (!badge) return;
+  const safeCount = Math.max(0, Number(count) || 0);
+  badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
+  badge.hidden = safeCount === 0;
+}
+
+function openChangeLogDialog() {
+  const dialog = document.getElementById('changeLogDialog');
+  const close = document.getElementById('closeChangeLog');
+  if (!dialog) return;
+  const shut = () => {
+    if (dialog.open) dialog.close();
+    document.documentElement.classList.remove('change-log-open');
+    document.body.classList.remove('change-log-open');
+  };
+  if (close && !close.dataset.bound) {
+    close.dataset.bound = '1';
+    close.addEventListener('click', shut);
+  }
+  if (!dialog.open) {
+    document.documentElement.classList.add('change-log-open');
+    document.body.classList.add('change-log-open');
+    dialog.showModal();
+  }
 }
 
 function showLogoutConfirmDialog() {
@@ -4805,60 +4907,6 @@ document.addEventListener(
 
 
 // ============================================================
-// ============================================================
-// SETTINGS + NOTIFICATIONS
-// ============================================================
-function openSettingsDialog() {
-  let dialog = document.getElementById('settingsDialog');
-  if (!dialog) {
-    dialog = document.createElement('dialog');
-    dialog.id = 'settingsDialog';
-    dialog.className = 'header-settings-dialog';
-    dialog.innerHTML = `
-      <div class="header-dialog-inner">
-        <div class="header-dialog-head"><h2>Settings</h2><button type="button" class="icon" id="closeSettings">×</button></div>
-        <div class="settings-options">
-          <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
-          <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
-        </div>
-      </div>`;
-    document.body.appendChild(dialog);
-    dialog.querySelector('#closeSettings').onclick = () => dialog.close();
-    dialog.querySelector('#settingsChangeLog').onclick = () => { dialog.close(); openChangeLog(); };
-    dialog.querySelector('#settingsLogout').onclick = () => { dialog.close(); showLogoutConfirmDialog(); };
-  }
-  dialog.showModal();
-}
-
-function openNotificationsDialog() {
-  let dialog = document.getElementById('notificationsDialog');
-  if (!dialog) {
-    dialog = document.createElement('dialog');
-    dialog.id = 'notificationsDialog';
-    dialog.className = 'header-settings-dialog';
-    dialog.innerHTML = `<div class="header-dialog-inner"><div class="header-dialog-head"><h2>Notifications</h2><button type="button" class="icon" id="closeNotifications">×</button></div><div class="notifications-empty">No new notifications.</div></div>`;
-    document.body.appendChild(dialog);
-    dialog.querySelector('#closeNotifications').onclick = () => dialog.close();
-  }
-  dialog.showModal();
-}
-
-function setNotificationCount(count) {
-  const badge = document.getElementById('notificationBadge');
-  if (!badge) return;
-  const n = Math.max(0, Number(count) || 0);
-  badge.textContent = n > 99 ? '99+' : String(n);
-  badge.hidden = n === 0;
-}
-
-function openChangeLog() {
-  const dialog = document.getElementById('changeLogDialog');
-  if (!dialog || dialog.open) return;
-  document.documentElement.classList.add('change-log-open');
-  document.body.classList.add('change-log-open');
-  dialog.showModal();
-}
-
 // PDF VIEWER CLOSE
 // ============================================================
 
@@ -4875,21 +4923,3 @@ $('#closePdf').onclick =
     $('#pdfViewer').innerHTML = '';
 
   };
-// ============================================================
-// CHANGE LOG
-// ============================================================
-(function setupChangeLog() {
-  const dialog = document.getElementById('changeLogDialog');
-  const close = document.getElementById('closeChangeLog');
-  if (!dialog) return;
-  const shut = () => {
-    if (dialog.open) dialog.close();
-    document.documentElement.classList.remove('change-log-open');
-    document.body.classList.remove('change-log-open');
-  };
-  close?.addEventListener('click', shut);
-  dialog.addEventListener('close', () => {
-    document.documentElement.classList.remove('change-log-open');
-    document.body.classList.remove('change-log-open');
-  });
-})();;
