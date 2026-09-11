@@ -221,7 +221,7 @@ async function loadSiteNotifications() {
       .from(NOTIFICATIONS_TABLE)
       .select('id,version,title,message,created_at')
       .order('created_at', { ascending: false })
-      .limit(1);
+      .limit(25);
 
     if (error) throw error;
 
@@ -1534,14 +1534,20 @@ function shareFileName(record) {
 async function sharePdfToDevice(record) {
   try {
     const blob = await buildSharePdf(record);
-    const file = new File([blob], shareFileName(record), { type: 'application/pdf' });
+    const buffer = await blob.arrayBuffer();
+    const file = new File([buffer], shareFileName(record), {
+      type: 'application/pdf',
+      lastModified: Date.now()
+    });
 
-    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-      await navigator.share({
-        files: [file],
-        title: `DGSL Handover - ${record.zone || 'Handover'}`,
-        text: 'DGSL Handover PDF'
-      });
+    // iPhone/iPad Web Share is more reliable when the PDF is rebuilt as a
+    // File from an ArrayBuffer and the share payload contains files only.
+    const canShareFile =
+      navigator.share &&
+      (!navigator.canShare || navigator.canShare({ files: [file] }));
+
+    if (canShareFile) {
+      await navigator.share({ files: [file] });
       return;
     }
 
