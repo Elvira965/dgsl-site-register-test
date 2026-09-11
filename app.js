@@ -1170,8 +1170,63 @@ async function loadRecords() {
 
 function setupRealtime() {
 
-  supabaseClient
-    .channel('handovers-test-live')
+  // Keep one realtime channel for all shared database data.
+  // This means changes made on one device are pushed to every other
+  // open copy of the Site Register without needing to close/reopen it.
+  if (!supabaseClient) return;
+
+  // Avoid creating duplicate subscriptions if setupRealtime() is called again.
+  if (window.dgslRealtimeChannel) {
+    try {
+      supabaseClient.removeChannel(window.dgslRealtimeChannel);
+    } catch (_) {}
+  }
+
+  const refreshRecordsSoon = (() => {
+    let timer = null;
+    return () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        loadRecords().catch(error =>
+          console.error('Realtime handover refresh error:', error)
+        );
+      }, 100);
+    };
+  })();
+
+  const refreshBugReportsSoon = (() => {
+    let timer = null;
+    return () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        refreshBugReportsBadge().catch(error =>
+          console.error('Realtime bug-report refresh error:', error)
+        );
+
+        const dialog = document.getElementById('dgslBugReportsDialog');
+        if (dialog?.open) {
+          openBugReportsDialog().catch(error =>
+            console.error('Realtime bug-report list refresh error:', error)
+          );
+        }
+      }, 100);
+    };
+  })();
+
+  const refreshNotificationsSoon = (() => {
+    let timer = null;
+    return () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        refreshNotificationState().catch(error =>
+          console.error('Realtime notification refresh error:', error)
+        );
+      }, 100);
+    };
+  })();
+
+  const channel = supabaseClient
+    .channel('dgsl-site-register-test-live')
     .on(
       'postgres_changes',
       {
@@ -1179,14 +1234,65 @@ function setupRealtime() {
         schema: 'public',
         table: 'handovers_test'
       },
-      async () => {
-
-        await loadRecords();
-
-      }
+      refreshRecordsSoon
     )
-    .subscribe();
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'bug_reports_test'
+      },
+      refreshBugReportsSoon
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'site_notifications_test'
+      },
+      refreshNotificationsSoon
+    )
+    .subscribe((status) => {
+      console.log('DGSL realtime status:', status);
 
+      if (status === 'SUBSCRIBED') {
+        window.dgslRealtimeConnected = true;
+      } else if (
+        status === 'CHANNEL_ERROR' ||
+        status === 'TIMED_OUT' ||
+        status === 'CLOSED'
+      ) {
+        window.dgslRealtimeConnected = false;
+      }
+    });
+
+  window.dgslRealtimeChannel = channel;
+
+  // A light fallback refresh protects against a browser/network connection
+  // temporarily losing its realtime socket. Normal updates still arrive
+  // immediately through Supabase Realtime.
+  if (window.dgslRealtimeFallbackTimer) {
+    clearInterval(window.dgslRealtimeFallbackTimer);
+  }
+
+  window.dgslRealtimeFallbackTimer = setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+
+    loadRecords().catch(error =>
+      console.warn('Realtime fallback handover refresh failed:', error)
+    );
+
+    if (currentUser) {
+      refreshBugReportsBadge().catch(error =>
+        console.warn('Realtime fallback bug-report refresh failed:', error)
+      );
+      refreshNotificationState().catch(error =>
+        console.warn('Realtime fallback notification refresh failed:', error)
+      );
+    }
+  }, 15000);
 }
 
 
