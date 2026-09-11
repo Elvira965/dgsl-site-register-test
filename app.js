@@ -105,6 +105,7 @@ function updateAuthUi() {
   if (newButton) newButton.style.display = currentUser ? '' : 'none';
   if (notificationsButton) notificationsButton.style.display = currentUser ? '' : 'none';
   if (settingsButton) settingsButton.style.display = currentUser ? '' : 'none';
+  showBugReportsButtonForAdmin();
   const bugReportsButton = document.getElementById('settingsBugReports');
   if (bugReportsButton) bugReportsButton.style.display = isBugReportAdmin() ? '' : 'none';
 
@@ -154,7 +155,7 @@ function openSettingsDialog() {
         <div class="settings-options">
           <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
           <button type="button" id="settingsBugReport" class="settings-option">Report a Bug</button>
-          <button type="button" id="settingsBugReports" class="settings-option" style="display:none;">Bug Reports</button>
+          <button type="button" id="settingsBugReports" class="settings-option" style="display:none; position:relative;">Bug Reports <span id="bugReportsBadge" aria-label="new bug reports" style="display:none; margin-left:8px; background:#c62828; color:#fff; border-radius:999px; padding:2px 7px; font-size:.78em; font-weight:700; line-height:1.2;"></span></button>
           <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
         </div>
       </div>
@@ -180,6 +181,7 @@ function openSettingsDialog() {
     };
   }
   if (!dialog.open) dialog.showModal();
+  showBugReportsButtonForAdmin();
 }
 
 
@@ -192,9 +194,43 @@ function isBugReportAdmin() {
 }
 
 function bugReportEscape(value) {
-  return String(value ?? '').replace(/[&<>"]/g, char => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[char]));
+}
+
+function updateBugReportsBadge(unreadCount) {
+  const button = document.getElementById('settingsBugReports');
+  const badge = document.getElementById('bugReportsBadge');
+  if (!button || !badge) return;
+  const count = Number(unreadCount) || 0;
+  badge.textContent = count > 0 ? `${count} new bug${count === 1 ? '' : 's'}` : '';
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+}
+
+async function refreshBugReportsBadge() {
+  if (!isBugReportAdmin() || !supabaseClient) {
+    updateBugReportsBadge(0);
+    return;
+  }
+
+  try {
+    const { count, error } = await supabaseClient
+      .from(BUG_REPORTS_TABLE)
+      .select('id', { count: 'exact', head: true })
+      .eq('is_read', false);
+    if (error) throw error;
+    updateBugReportsBadge(count || 0);
+  } catch (error) {
+    console.error('Bug report unread count error:', error);
+  }
+}
+
+function showBugReportsButtonForAdmin() {
+  const button = document.getElementById('settingsBugReports');
+  if (button) button.style.display = isBugReportAdmin() ? '' : 'none';
+  if (isBugReportAdmin()) refreshBugReportsBadge();
+  else updateBugReportsBadge(0);
 }
 
 function openBugReportDialog() {
@@ -258,7 +294,8 @@ async function submitBugReport() {
       website_version: SITE_VERSION,
       page_url: window.location.href,
       account_id: currentUser.id,
-      status: 'Open'
+      status: 'New',
+      is_read: false
     });
     if (error) throw error;
 
@@ -266,6 +303,7 @@ async function submitBugReport() {
     dialog.querySelector('#bugReportTask').value = '';
     dialog.querySelector('#bugReportDescription').value = '';
     status.textContent = 'Bug report submitted. Thank you.';
+    if (isBugReportAdmin()) refreshBugReportsBadge();
     setTimeout(() => { if (dialog.open) dialog.close(); }, 900);
   } catch (error) {
     console.error('Bug report error:', error);
@@ -273,6 +311,66 @@ async function submitBugReport() {
   } finally {
     button.disabled = false;
   }
+}
+
+function formatBugReportDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value || '') : date.toLocaleString();
+}
+
+async function openBugReportDetail(item, parentDialog) {
+  // Opening a report marks it as read. The red NEW BUG marker and Settings badge then disappear.
+  if (!item.is_read) {
+    const { error } = await supabaseClient
+      .from(BUG_REPORTS_TABLE)
+      .update({ is_read: true, status: 'Read' })
+      .eq('id', item.id);
+    if (error) {
+      console.error('Bug report read error:', error);
+      alert('Unable to mark this bug report as read. Please try again.');
+      return;
+    }
+    item.is_read = true;
+    item.status = 'Read';
+    refreshBugReportsBadge();
+  }
+
+  let detail = document.getElementById('dgslBugReportDetailDialog');
+  if (!detail) {
+    detail = document.createElement('dialog');
+    detail.id = 'dgslBugReportDetailDialog';
+    detail.className = 'header-settings-dialog';
+    detail.style.width = 'min(760px, calc(100vw - 32px))';
+    detail.style.maxWidth = 'calc(100vw - 32px)';
+    detail.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head">
+          <div>
+            <p class="eyebrow">DGSL SITE REGISTER</p>
+            <h2>Bug Report</h2>
+          </div>
+          <button type="button" class="icon" id="closeBugReportDetail" aria-label="Close">×</button>
+        </div>
+        <div id="bugReportDetailContent" class="settings-form"></div>
+      </div>
+    `;
+    document.body.appendChild(detail);
+    detail.querySelector('#closeBugReportDetail').onclick = () => detail.close();
+  }
+
+  const content = detail.querySelector('#bugReportDetailContent');
+  content.innerHTML = `
+    <div style="font-size:.95em; margin-bottom:14px;"><strong>${bugReportEscape(item.name)}</strong></div>
+    <div style="margin-bottom:14px;"><strong>Status</strong><br>${bugReportEscape(item.status || 'Read')}</div>
+    <div style="margin-bottom:14px;"><strong>What they were trying to do</strong><br>${bugReportEscape(item.trying_to_do).replace(/\n/g, '<br>')}</div>
+    <div style="margin-bottom:14px;"><strong>Report</strong><br>${bugReportEscape(item.report).replace(/\n/g, '<br>')}</div>
+    <div style="margin-bottom:14px;"><strong>Date / time</strong><br>${bugReportEscape(formatBugReportDate(item.created_at))}</div>
+    <div style="margin-bottom:14px;"><strong>Version</strong><br>${bugReportEscape(item.website_version || '')}</div>
+    ${item.page_url ? `<div style="margin-bottom:14px;"><strong>Page</strong><br><span style="overflow-wrap:anywhere">${bugReportEscape(item.page_url)}</span></div>` : ''}
+  `;
+
+  if (parentDialog?.open) parentDialog.close();
+  if (!detail.open) detail.showModal();
 }
 
 async function openBugReportsDialog() {
@@ -294,8 +392,11 @@ async function openBugReportsDialog() {
     dialog = document.createElement('dialog');
     dialog.id = 'dgslBugReportsDialog';
     dialog.className = 'header-settings-dialog';
+    dialog.style.width = 'min(900px, calc(100vw - 32px))';
+    dialog.style.maxWidth = 'calc(100vw - 32px)';
+    dialog.style.maxHeight = 'calc(100vh - 32px)';
     dialog.innerHTML = `
-      <div class="header-dialog-inner">
+      <div class="header-dialog-inner" style="max-height:calc(100vh - 64px); overflow:auto;">
         <div class="header-dialog-head">
           <div>
             <p class="eyebrow">DGSL SITE REGISTER</p>
@@ -317,25 +418,37 @@ async function openBugReportsDialog() {
   try {
     const { data, error } = await supabaseClient
       .from(BUG_REPORTS_TABLE)
-      .select('id,name,trying_to_do,report,created_at,website_version,page_url,status')
+      .select('id,name,trying_to_do,report,created_at,website_version,page_url,status,is_read')
       .order('created_at', { ascending: false });
     if (error) throw error;
 
     if (!data?.length) {
       list.innerHTML = '<p>No bug reports have been submitted.</p>';
+      updateBugReportsBadge(0);
       return;
     }
 
-    list.innerHTML = data.map(item => `
-      <article class="site-notification-card">
-        <div class="site-notification-title">${bugReportEscape(item.name)}</div>
-        <div class="site-notification-version">${bugReportEscape(item.status || 'Open')} · Version ${bugReportEscape(item.website_version || '')}</div>
-        <div><strong>What they were trying to do</strong><br>${bugReportEscape(item.trying_to_do)}</div>
-        <div style="margin-top:8px"><strong>Report</strong><br>${bugReportEscape(item.report).replace(/\n/g, '<br>')}</div>
-        <div style="margin-top:8px;font-size:.9em">${bugReportEscape(new Date(item.created_at).toLocaleString())}</div>
-        ${item.page_url ? `<div style="margin-top:4px;font-size:.85em;overflow-wrap:anywhere">${bugReportEscape(item.page_url)}</div>` : ''}
-      </article>
+    const unreadCount = data.filter(item => !item.is_read).length;
+    updateBugReportsBadge(unreadCount);
+
+    list.innerHTML = data.map((item, index) => `
+      <button type="button" class="bug-report-list-item" data-bug-report-index="${index}" style="display:block; width:100%; text-align:left; border:1px solid #d9e1ea; border-radius:12px; background:#fff; padding:14px 16px; margin:0 0 10px; cursor:pointer;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
+          <strong>${bugReportEscape(item.name)}</strong>
+          ${!item.is_read ? '<span style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW BUG</span>' : '<span style="font-size:.8em; opacity:.7;">Read</span>'}
+        </div>
+        <div style="font-size:.9em; opacity:.8; margin-bottom:7px;">${bugReportEscape(formatBugReportDate(item.created_at))} · Version ${bugReportEscape(item.website_version || '')}</div>
+        <div><strong>Trying to do:</strong> ${bugReportEscape(item.trying_to_do)}</div>
+        <div style="margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>Report:</strong> ${bugReportEscape(item.report)}</div>
+      </button>
     `).join('');
+
+    list.querySelectorAll('[data-bug-report-index]').forEach(button => {
+      button.onclick = () => {
+        const item = data[Number(button.dataset.bugReportIndex)];
+        openBugReportDetail(item, dialog);
+      };
+    });
   } catch (error) {
     console.error('Bug reports error:', error);
     list.innerHTML = '<p>Unable to load bug reports. Please check the Supabase table and policies.</p>';
