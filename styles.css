@@ -1677,3 +1677,11 @@ body.change-log-open {
   margin-left: 8px !important;
   vertical-align: middle !important;
 }
+
+/* Desktop summary bubbles: keep all four backgrounds equally visible. */
+@media (min-width: 801px) {
+  .cards article.blue .summary-card-icon { background-color: #e4efff !important; }
+  .cards article.amber .summary-card-icon { background-color: #fff2cf !important; }
+  .cards article.green .summary-card-icon { background-color: #e1f3e8 !important; }
+  .cards article.red .summary-card-icon { background-color: #f9e1e1 !important; }
+}
