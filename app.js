@@ -357,7 +357,7 @@ async function openBugReportDetail(item, parentDialog) {
     detail.style.setProperty('margin', 'auto', 'important');
 
     detail.innerHTML = `
-      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:auto; box-sizing:border-box;">
+      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:hidden; box-sizing:border-box; display:flex; flex-direction:column;">
         <div class="header-dialog-head">
           <div>
             <p class="eyebrow">DGSL SITE REGISTER</p>
@@ -365,42 +365,16 @@ async function openBugReportDetail(item, parentDialog) {
           </div>
           <button type="button" class="icon" id="closeBugReportDetail" aria-label="Close">×</button>
         </div>
-        <div id="bugReportDetailContent" class="settings-form"></div>
-        <div style="padding:0 22px 22px;">
-          <button type="button" id="deleteBugReport" class="danger" style="background:#c62828 !important; color:#fff !important; border-color:#c62828 !important; width:100%;">Delete Bug Report</button>
+        <div id="bugReportDetailContent" class="settings-form" style="flex:1 1 auto; min-height:0; overflow:auto;"></div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; padding:12px 22px 22px; margin-top:auto; flex:0 0 auto;">
+          <button type="button" id="deleteBugReport" class="danger" style="background:#c62828 !important; color:#fff !important; border-color:#c62828 !important; width:auto; min-width:150px; padding:9px 14px; font-size:.9em;">Delete Bug Report</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(detail);
 
-    detail.querySelector('#deleteBugReport').onclick = async () => {
-      if (!item?.id || !supabaseClient) return;
-      if (!confirm('Delete this bug report? This cannot be undone.')) return;
 
-      const deleteButton = detail.querySelector('#deleteBugReport');
-      deleteButton.disabled = true;
-      deleteButton.textContent = 'Deleting...';
-
-      try {
-        const { error } = await supabaseClient
-          .from(BUG_REPORTS_TABLE)
-          .delete()
-          .eq('id', item.id);
-        if (error) throw error;
-
-        if (detail.open) detail.close();
-        if (parentDialog?.open) {
-          await openBugReportsDialog();
-        }
-        refreshBugReportsBadge();
-      } catch (error) {
-        console.error('Bug report delete error:', error);
-        alert('Unable to delete this bug report. Please check the Supabase DELETE policy.');
-        deleteButton.disabled = false;
-        deleteButton.textContent = 'Delete Bug Report';
-      }
-    };
 
     detail.querySelector('#closeBugReportDetail').onclick = () => {
       if (detail.open) detail.close();
@@ -428,6 +402,46 @@ async function openBugReportDetail(item, parentDialog) {
     <div style="margin-bottom:14px;"><strong>Version</strong><br>${bugReportEscape(item.website_version || '')}</div>
     ${item.page_url ? `<div style="margin-bottom:14px;"><strong>Page</strong><br><span style="overflow-wrap:anywhere">${bugReportEscape(item.page_url)}</span></div>` : ''}
   `;
+
+  // Re-bind the delete button every time a report is opened so it always
+  // targets the currently selected report (not the first report ever opened).
+  const deleteButton = detail.querySelector('#deleteBugReport');
+  deleteButton.disabled = false;
+  deleteButton.textContent = 'Delete Bug Report';
+  deleteButton.onclick = async () => {
+    if (!item?.id || !supabaseClient) return;
+    if (!confirm('Delete this bug report? This cannot be undone.')) return;
+
+    deleteButton.disabled = true;
+    deleteButton.textContent = 'Deleting...';
+
+    try {
+      const { error } = await supabaseClient
+        .from(BUG_REPORTS_TABLE)
+        .delete()
+        .eq('id', item.id);
+      if (error) throw error;
+
+      // Remove the deleted report from the visible list immediately.
+      const list = parentDialog?.querySelector('#bugReportsList');
+      const listItem = list?.querySelector(`[data-bug-report-id="${CSS.escape(String(item.id))}"]`);
+      if (listItem) listItem.remove();
+
+      if (detail.open) detail.close();
+
+      // Reload the list from Supabase so all devices and the current window
+      // agree on the actual server state.
+      if (parentDialog?.open) {
+        await openBugReportsDialog();
+      }
+      await refreshBugReportsBadge();
+    } catch (error) {
+      console.error('Bug report delete error:', error);
+      alert('Unable to delete this bug report. Please check the Supabase DELETE policy.');
+      deleteButton.disabled = false;
+      deleteButton.textContent = 'Delete Bug Report';
+    }
+  };
 
   if (!detail.open) detail.showModal();
 }
@@ -502,11 +516,11 @@ async function openBugReportsDialog() {
     updateBugReportsBadge(unreadCount);
 
     list.innerHTML = data.map((item, index) => `
-      <button type="button" class="bug-report-list-item" data-bug-report-index="${index}"
+      <button type="button" class="bug-report-list-item" data-bug-report-index="${index}" data-bug-report-id="${bugReportEscape(item.id)}"
         style="display:block; width:100%; text-align:left; border:1px solid #d9e1ea; border-radius:12px; background:#fff; padding:14px 16px; margin:0 0 10px; cursor:pointer;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
           <strong>${bugReportEscape(item.name)}</strong>
-          ${!item.is_read ? '<span style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW</span>' : ''}
+          ${!item.is_read ? '<span data-bug-report-new style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW</span>' : ''}
         </div>
         <div style="font-size:.9em; opacity:.8; margin-bottom:7px;">
           ${bugReportEscape(formatBugReportDate(item.created_at))} · Version ${bugReportEscape(item.website_version || '')}
@@ -518,9 +532,18 @@ async function openBugReportsDialog() {
     `).join('');
 
     list.querySelectorAll('[data-bug-report-index]').forEach(button => {
-      button.onclick = () => {
+      button.onclick = async () => {
         const item = data[Number(button.dataset.bugReportIndex)];
-        openBugReportDetail(item, dialog);
+        await openBugReportDetail(item, dialog);
+
+        // Remove the NEW marker from this row immediately after it is opened.
+        const newLabel = button.querySelector('[data-bug-report-new]');
+        if (newLabel) newLabel.remove();
+        button.dataset.bugReportRead = 'true';
+
+        const remainingUnread = Array.from(list.querySelectorAll('[data-bug-report-index]'))
+          .filter(row => !row.dataset.bugReportRead && row.querySelector('[data-bug-report-new]')).length;
+        updateBugReportsBadge(remainingUnread);
       };
     });
   } catch (error) {
@@ -1170,63 +1193,8 @@ async function loadRecords() {
 
 function setupRealtime() {
 
-  // Keep one realtime channel for all shared database data.
-  // This means changes made on one device are pushed to every other
-  // open copy of the Site Register without needing to close/reopen it.
-  if (!supabaseClient) return;
-
-  // Avoid creating duplicate subscriptions if setupRealtime() is called again.
-  if (window.dgslRealtimeChannel) {
-    try {
-      supabaseClient.removeChannel(window.dgslRealtimeChannel);
-    } catch (_) {}
-  }
-
-  const refreshRecordsSoon = (() => {
-    let timer = null;
-    return () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        loadRecords().catch(error =>
-          console.error('Realtime handover refresh error:', error)
-        );
-      }, 100);
-    };
-  })();
-
-  const refreshBugReportsSoon = (() => {
-    let timer = null;
-    return () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        refreshBugReportsBadge().catch(error =>
-          console.error('Realtime bug-report refresh error:', error)
-        );
-
-        const dialog = document.getElementById('dgslBugReportsDialog');
-        if (dialog?.open) {
-          openBugReportsDialog().catch(error =>
-            console.error('Realtime bug-report list refresh error:', error)
-          );
-        }
-      }, 100);
-    };
-  })();
-
-  const refreshNotificationsSoon = (() => {
-    let timer = null;
-    return () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        refreshNotificationState().catch(error =>
-          console.error('Realtime notification refresh error:', error)
-        );
-      }, 100);
-    };
-  })();
-
-  const channel = supabaseClient
-    .channel('dgsl-site-register-test-live')
+  supabaseClient
+    .channel('handovers-test-live')
     .on(
       'postgres_changes',
       {
@@ -1234,65 +1202,14 @@ function setupRealtime() {
         schema: 'public',
         table: 'handovers_test'
       },
-      refreshRecordsSoon
-    )
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'bug_reports_test'
-      },
-      refreshBugReportsSoon
-    )
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'site_notifications_test'
-      },
-      refreshNotificationsSoon
-    )
-    .subscribe((status) => {
-      console.log('DGSL realtime status:', status);
+      async () => {
 
-      if (status === 'SUBSCRIBED') {
-        window.dgslRealtimeConnected = true;
-      } else if (
-        status === 'CHANNEL_ERROR' ||
-        status === 'TIMED_OUT' ||
-        status === 'CLOSED'
-      ) {
-        window.dgslRealtimeConnected = false;
+        await loadRecords();
+
       }
-    });
+    )
+    .subscribe();
 
-  window.dgslRealtimeChannel = channel;
-
-  // A light fallback refresh protects against a browser/network connection
-  // temporarily losing its realtime socket. Normal updates still arrive
-  // immediately through Supabase Realtime.
-  if (window.dgslRealtimeFallbackTimer) {
-    clearInterval(window.dgslRealtimeFallbackTimer);
-  }
-
-  window.dgslRealtimeFallbackTimer = setInterval(() => {
-    if (document.visibilityState !== 'visible') return;
-
-    loadRecords().catch(error =>
-      console.warn('Realtime fallback handover refresh failed:', error)
-    );
-
-    if (currentUser) {
-      refreshBugReportsBadge().catch(error =>
-        console.warn('Realtime fallback bug-report refresh failed:', error)
-      );
-      refreshNotificationState().catch(error =>
-        console.warn('Realtime fallback notification refresh failed:', error)
-      );
-    }
-  }, 15000);
 }
 
 
