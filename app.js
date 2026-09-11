@@ -155,7 +155,7 @@ function openSettingsDialog() {
         <div class="settings-options">
           <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
           <button type="button" id="settingsBugReport" class="settings-option">Report a Bug</button>
-          <button type="button" id="settingsBugReports" class="settings-option" style="display:none; position:relative;">Bug Reports <span id="bugReportsBadge" aria-label="new bug reports" style="display:none; margin-left:8px; background:#c62828; color:#fff; border-radius:999px; padding:2px 7px; font-size:.78em; font-weight:700; line-height:1.2;"></span></button>
+          <button type="button" id="settingsBugReports" class="settings-option" style="display:none; position:relative;">Bug Reports <span id="bugReportsBadge" class="notification-badge bug-reports-badge" aria-label="unread bug reports" style="display:none;"></span></button>
           <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
         </div>
       </div>
@@ -185,12 +185,11 @@ function openSettingsDialog() {
 }
 
 
-const BUG_REPORT_ADMIN_EMAIL = 'elvira@dgsl.ie';
-const BUG_REPORT_ADMIN_PIN = 'Admin26';
 const BUG_REPORTS_TABLE = 'bug_reports_test';
 
 function isBugReportAdmin() {
-  return !!currentUser && String(currentUser.email || '').toLowerCase() === BUG_REPORT_ADMIN_EMAIL;
+  // Bug Reports are available to any logged-in user.
+  return !!currentUser;
 }
 
 function bugReportEscape(value) {
@@ -204,7 +203,8 @@ function updateBugReportsBadge(unreadCount) {
   const badge = document.getElementById('bugReportsBadge');
   if (!button || !badge) return;
   const count = Number(unreadCount) || 0;
-  badge.textContent = count > 0 ? `${count} new bug${count === 1 ? '' : 's'}` : '';
+  badge.textContent = count > 0 ? String(count) : '';
+  badge.className = 'notification-badge bug-reports-badge';
   badge.style.display = count > 0 ? 'inline-block' : 'none';
 }
 
@@ -398,20 +398,7 @@ async function openBugReportDetail(item, parentDialog) {
 }
 
 async function openBugReportsDialog() {
-  if (!isBugReportAdmin()) return;
-
-  const pin = window.prompt('Enter the admin PASSWORD to view Bug Reports:');
-  if (pin === null) return;
-
-  if (BUG_REPORT_ADMIN_PIN === 'CHANGE_THIS_PIN') {
-    alert('Please set your admin PASSWORD in app.js before using Bug Reports.');
-    return;
-  }
-
-  if (pin !== BUG_REPORT_ADMIN_PIN) {
-    alert('Incorrect PASSWORD.');
-    return;
-  }
+  if (!currentUser) return;
 
   let dialog = document.getElementById('dgslBugReportsDialog');
 
@@ -1751,7 +1738,7 @@ function showRowActionDialog(id) {
       <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
-        ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button>' : ''}
+        ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button><button type="button" id="rowActionShare">Share</button>' : ''}
         ${currentUser ? '<button type="button" id="rowActionMore">More</button>' : ''}
       </div>
       <div style="margin-top:18px;">
@@ -1796,6 +1783,14 @@ function showRowActionDialog(id) {
         console.error('PDF download error:', error);
         alert('Unable to download the PDF.');
       }
+    };
+  }
+
+  const shareButton = document.getElementById('rowActionShare');
+  if (shareButton) {
+    shareButton.onclick = () => {
+      close();
+      setTimeout(() => sharePdfToDevice(record), 0);
     };
   }
 

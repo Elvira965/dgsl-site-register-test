@@ -241,7 +241,39 @@ main {
 
   padding: 18px;
 
+  position: relative;
+
 }
+
+.summary-card-icon {
+  position: absolute;
+  top: 26px;
+  right: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-card-icon svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cards article.blue .summary-card-icon { background: #eaf2ff; }
+.cards article.blue .summary-card-icon svg { stroke: #2f80ed; }
+.cards article.amber .summary-card-icon { background: #fff5dc; }
+.cards article.amber .summary-card-icon svg { stroke: #d99b24; }
+.cards article.green .summary-card-icon { background: #e7f6ed; }
+.cards article.green .summary-card-icon svg { stroke: #3b8f5a; }
+.cards article.red .summary-card-icon { background: #fdeaea; }
+.cards article.red .summary-card-icon svg { stroke: #c84b4b; }
 
 
 .cards article span {
@@ -254,6 +286,10 @@ main {
 
   margin-bottom: 8px;
 
+}
+
+.cards article > span:not(.summary-card-icon) {
+  padding-right: 52px;
 }
 
 
