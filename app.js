@@ -1738,8 +1738,7 @@ function showRowActionDialog(id) {
       <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
-        ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button><button type="button" id="rowActionShare">Share</button>' : ''}
-        ${currentUser ? '<button type="button" id="rowActionMore">More</button>' : ''}
+        <button type="button" id="rowActionMore">More</button>
       </div>
       <div style="margin-top:18px;">
         <button type="button" id="rowActionCancel">Cancel</button>
@@ -1771,28 +1770,6 @@ function showRowActionDialog(id) {
       }
     }, 0);
   };
-
-  const downloadButton = document.getElementById('rowActionDownload');
-  if (downloadButton) {
-    downloadButton.onclick = async () => {
-      close();
-      try {
-        open(record, false);
-        await generatePdf(false);
-      } catch (error) {
-        console.error('PDF download error:', error);
-        alert('Unable to download the PDF.');
-      }
-    };
-  }
-
-  const shareButton = document.getElementById('rowActionShare');
-  if (shareButton) {
-    shareButton.onclick = () => {
-      close();
-      setTimeout(() => sharePdfToDevice(record), 0);
-    };
-  }
 
   const moreButton = document.getElementById('rowActionMore');
   if (moreButton) {
@@ -1829,7 +1806,7 @@ function showRowMoreDialog(record) {
         <div style="font-size:18px;font-weight:700;padding:6px 58px 6px 58px;">More options</div>
       </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button type="button" id="rowMoreCopy">Copy</button>
+        ${currentUser ? '<button type="button" id="rowMoreCopy">Copy</button>' : '<button type="button" id="rowMoreDownload">Download PDF</button>'}
         <button type="button" id="rowMoreShare">Share</button>
       </div>
       <div style="margin-top:18px;">
@@ -1839,10 +1816,29 @@ function showRowMoreDialog(record) {
   `;
 
   dialog.querySelector('#rowMoreCancel').onclick = () => dialog.close();
-  dialog.querySelector('#rowMoreCopy').onclick = () => {
-    dialog.close();
-    setTimeout(() => showCopyConfirmDialog(record), 0);
-  };
+
+  const moreDownloadButton = dialog.querySelector('#rowMoreDownload');
+  if (moreDownloadButton) {
+    moreDownloadButton.onclick = async () => {
+      dialog.close();
+      try {
+        open(record, false);
+        await generatePdf(false);
+      } catch (error) {
+        console.error('PDF download error:', error);
+        alert('Unable to download the PDF.');
+      }
+    };
+  }
+
+  const moreCopyButton = dialog.querySelector('#rowMoreCopy');
+  if (moreCopyButton) {
+    moreCopyButton.onclick = () => {
+      dialog.close();
+      setTimeout(() => showCopyConfirmDialog(record), 0);
+    };
+  }
+
   dialog.querySelector('#rowMoreShare').onclick = () => {
     dialog.close();
     setTimeout(() => sharePdfToDevice(record), 0);

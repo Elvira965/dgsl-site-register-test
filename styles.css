@@ -1645,3 +1645,35 @@ body.change-log-open {
 #rowActionCancel:hover,
 #rowMoreCancel:hover,
 #copyConfirmCancel:hover { background:#fff1f1 !important; color:#b42318 !important; border-color:#b42318 !important; }
+
+/* ============================================================
+   SUMMARY CARD ICONS — desktop alignment/background fix
+   ============================================================ */
+.summary-card-icon {
+  display: grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-items: center !important;
+  line-height: 0 !important;
+  margin: 0 !important;
+}
+.summary-card-icon svg {
+  display: block !important;
+  width: 25px !important;
+  height: 25px !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+.cards article.blue .summary-card-icon { background-color: #eaf2ff !important; }
+.cards article.amber .summary-card-icon { background-color: #fff5dc !important; }
+.cards article.green .summary-card-icon { background-color: #e7f6ed !important; }
+.cards article.red .summary-card-icon { background-color: #fdeaea !important; }
+
+/* Keep the Bug Reports unread count beside the button text. */
+#settingsBugReports .bug-reports-badge {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  margin-left: 8px !important;
+  vertical-align: middle !important;
+}
