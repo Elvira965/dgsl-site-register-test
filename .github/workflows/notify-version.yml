@@ -52,20 +52,28 @@ jobs:
             echo "version_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create TEST notification
+      - name: Replace existing TEST notification with latest version
         if: steps.version_check.outputs.version_changed == 'true'
         env:
           SUPABASE_URL: https://mgxbsxqgjxpdvdjsixqi.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
+          echo "Removing previous TEST website-update notifications..."
+          curl --fail-with-body \
+            -X DELETE \
+            "$SUPABASE_URL/rest/v1/site_notifications_test?id=not.is.null" \
+            -H "apikey: $SUPABASE_SECRET_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SECRET_KEY"
+
+          echo "Creating latest TEST website-update notification for version $VERSION..."
           curl --fail-with-body \
             -X POST \
             "$SUPABASE_URL/rest/v1/site_notifications_test" \
             -H "apikey: $SUPABASE_SECRET_KEY" \
             -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
             -H "Content-Type: application/json" \
-            -H "Prefer: resolution=ignore-duplicates,return=minimal" \
+            -H "Prefer: return=minimal" \
             --data "$(jq -n \
               --arg version "$VERSION" \
               --arg title "Website updated" \
