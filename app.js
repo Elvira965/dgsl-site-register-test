@@ -21,7 +21,7 @@ let records = [];
 let editing = null;
 let filter = 'All';
 
-const SITE_VERSION = '1.2.5';
+const SITE_VERSION = '1.2.6';
 const NOTIFICATIONS_TABLE = 'site_notifications_test';
 const NOTIFICATIONS_SEEN_KEY = 'dgsl_site_register_test_notifications_seen_v1';
 
@@ -1391,17 +1391,12 @@ function showRowActionDialog(id) {
     document.getElementById('rowActionDialog');
 
   if (!dialog) {
-
-    dialog =
-      document.createElement('dialog');
-
-    dialog.id =
-      'rowActionDialog';
-
+    dialog = document.createElement('dialog');
+    dialog.id = 'rowActionDialog';
     dialog.style.padding = '0';
     dialog.style.border = '0';
     dialog.style.borderRadius = '12px';
-    dialog.style.maxWidth = '340px';
+    dialog.style.maxWidth = '360px';
     dialog.style.width = 'calc(100% - 32px)';
     dialog.style.height = 'auto';
     dialog.style.minHeight = '0';
@@ -1409,120 +1404,233 @@ function showRowActionDialog(id) {
     dialog.style.margin = 'auto';
     dialog.style.boxSizing = 'border-box';
     dialog.style.overflow = 'hidden';
-
     dialog.style.setProperty('position', 'fixed', 'important');
     dialog.style.setProperty('top', '50%', 'important');
     dialog.style.setProperty('left', '50%', 'important');
     dialog.style.setProperty('right', 'auto', 'important');
     dialog.style.setProperty('bottom', 'auto', 'important');
     dialog.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
-    dialog.style.setProperty('width', 'min(340px, calc(100vw - 32px))', 'important');
-    dialog.style.setProperty('height', '190px', 'important');
-    dialog.style.setProperty('min-height', '190px', 'important');
-    dialog.style.setProperty('max-height', '190px', 'important');
-
     document.body.appendChild(dialog);
   }
 
-  // Rebuild the popup every time it is opened so the available
-  // actions always match the current login state.
   dialog.innerHTML = `
-    <div style="padding:22px; text-align:center; height:auto; min-height:0; max-height:none; box-sizing:border-box;">
-      <div style="font-size:18px; font-weight:700; margin-bottom:18px;">
+    <div style="padding:22px;text-align:center;box-sizing:border-box;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:18px;">
         What would you like to do?
       </div>
-      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
-        ${currentUser ? '<button type="button" id="rowActionCopy">Copy</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
-        <button type="button" id="rowActionDownload">Download PDF</button>
         <button type="button" id="rowActionCancel">Cancel</button>
+        ${currentUser ? '<button type="button" id="rowActionMore">More</button>' : ''}
+        ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button>' : ''}
       </div>
     </div>
   `;
 
-  document.getElementById('rowActionCancel').onclick =
-    () => dialog.close();
+  const close = () => dialog.close();
 
-  const rowEditButton =
-    document.getElementById('rowActionEdit');
+  document.getElementById('rowActionCancel').onclick = close;
 
-  if (rowEditButton) {
-    rowEditButton.onclick =
-      () => {
-        if (!currentUser) {
-          dialog.close();
-          return;
-        }
-
-        dialog.close();
-        setTimeout(() => open(record), 0);
-      };
-  }
-
-  document.getElementById('rowActionView').onclick =
-    () => {
-      dialog.close();
-      setTimeout(() => {
-
-        // Call the existing View button without relying on CSS.escape.
-        const viewButtons =
-          document.querySelectorAll('[data-view]');
-
-        for (const button of viewButtons) {
-
-          if (
-            String(button.getAttribute('data-view')) ===
-            String(id)
-          ) {
-            button.click();
-            break;
-          }
-
-        }
-
-      }, 0);
+  const editButton = document.getElementById('rowActionEdit');
+  if (editButton) {
+    editButton.onclick = () => {
+      if (!currentUser) return close();
+      close();
+      setTimeout(() => open(record), 0);
     };
-
-  const rowDownloadButton =
-    document.getElementById('rowActionDownload');
-
-  if (rowDownloadButton) {
-    rowDownloadButton.onclick =
-      async () => {
-        dialog.close();
-
-        try {
-          open(record, false);
-          await generatePdf(false);
-        } catch (error) {
-          console.error('PDF download error:', error);
-          alert('Unable to download the PDF.');
-        }
-      };
   }
 
-  const rowCopyButton =
-    document.getElementById('rowActionCopy');
-
-  if (rowCopyButton) {
-    rowCopyButton.onclick =
-      () => {
-        if (!currentUser) {
-          dialog.close();
-          return;
+  document.getElementById('rowActionView').onclick = () => {
+    close();
+    setTimeout(() => {
+      const viewButtons = document.querySelectorAll('[data-view]');
+      for (const button of viewButtons) {
+        if (String(button.getAttribute('data-view')) === String(id)) {
+          button.click();
+          break;
         }
+      }
+    }, 0);
+  };
 
-        dialog.close();
-        setTimeout(() => showCopyConfirmDialog(record), 0);
-      };
+  const downloadButton = document.getElementById('rowActionDownload');
+  if (downloadButton) {
+    downloadButton.onclick = async () => {
+      close();
+      try {
+        open(record, false);
+        await generatePdf(false);
+      } catch (error) {
+        console.error('PDF download error:', error);
+        alert('Unable to download the PDF.');
+      }
+    };
+  }
+
+  const moreButton = document.getElementById('rowActionMore');
+  if (moreButton) {
+    moreButton.onclick = () => {
+      close();
+      setTimeout(() => showRowMoreDialog(record), 0);
+    };
   }
 
   if (!dialog.open) {
     dialog.showModal();
   }
-
 }
+
+function showRowMoreDialog(record) {
+
+  let dialog = document.getElementById('rowMoreDialog');
+
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'rowMoreDialog';
+    dialog.style.padding = '0';
+    dialog.style.border = '0';
+    dialog.style.borderRadius = '12px';
+    dialog.style.width = 'min(360px, calc(100vw - 32px))';
+    dialog.style.maxWidth = '360px';
+    dialog.style.boxSizing = 'border-box';
+    dialog.style.margin = 'auto';
+    dialog.style.overflow = 'hidden';
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div style="padding:22px;text-align:center;box-sizing:border-box;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:18px;">More options</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button type="button" id="rowMoreCopy">Copy</button>
+        <button type="button" id="rowMoreShare">Share</button>
+        <button type="button" id="rowMoreCancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  dialog.querySelector('#rowMoreCancel').onclick = () => dialog.close();
+
+  dialog.querySelector('#rowMoreCopy').onclick = () => {
+    dialog.close();
+    setTimeout(() => showCopyConfirmDialog(record), 0);
+  };
+
+  dialog.querySelector('#rowMoreShare').onclick = () => {
+    dialog.close();
+    setTimeout(() => showShareDialog(record), 0);
+  };
+
+  if (!dialog.open) dialog.showModal();
+}
+
+async function buildSharePdf(record) {
+  open(record, false);
+  const blob = await generatePdf(true);
+  if (!(blob instanceof Blob)) {
+    throw new Error('The PDF could not be created.');
+  }
+  return blob;
+}
+
+function shareFileName(record) {
+  const safeZone = String(record.zone || 'Handover')
+    .replace(/[^a-z0-9-_ ]/gi, '')
+    .replace(/\s+/g, '-');
+  return `DGSL-${safeZone || 'Handover'}-Handover-${today()}.pdf`;
+}
+
+async function sharePdfToDevice(record, preferredTarget = '') {
+  try {
+    const blob = await buildSharePdf(record);
+    const file = new File([blob], shareFileName(record), { type: 'application/pdf' });
+
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({
+        files: [file],
+        title: `DGSL Handover - ${record.zone || 'Handover'}`,
+        text: preferredTarget === 'email'
+          ? 'DGSL Handover PDF'
+          : preferredTarget === 'whatsapp'
+            ? 'DGSL Handover PDF'
+            : 'DGSL Handover PDF'
+      });
+      return;
+    }
+
+    // Desktop browsers without file sharing cannot attach a generated local
+    // PDF directly to email/WhatsApp from a static website. Download it so
+    // the user can attach it in the chosen app.
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    if (preferredTarget === 'email') {
+      window.location.href = `mailto:?subject=${encodeURIComponent(file.name)}&body=${encodeURIComponent('The DGSL Handover PDF has been downloaded. Please attach the downloaded PDF to this email.')}`;
+    } else if (preferredTarget === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent('DGSL Handover PDF downloaded. Please attach the downloaded PDF.')}`, '_blank', 'noopener');
+    } else {
+      alert('The PDF has been downloaded. You can now share it using your preferred app.');
+    }
+  } catch (error) {
+    if (error?.name === 'AbortError') return;
+    console.error('Share PDF error:', error);
+    alert('Unable to share the PDF.');
+  }
+}
+
+function showShareDialog(record) {
+  let dialog = document.getElementById('rowShareDialog');
+
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'rowShareDialog';
+    dialog.style.padding = '0';
+    dialog.style.border = '0';
+    dialog.style.borderRadius = '12px';
+    dialog.style.width = 'min(390px, calc(100vw - 32px))';
+    dialog.style.maxWidth = '390px';
+    dialog.style.boxSizing = 'border-box';
+    dialog.style.margin = 'auto';
+    dialog.style.overflow = 'hidden';
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div style="padding:22px;text-align:center;box-sizing:border-box;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:10px;">Share PDF</div>
+      <div style="font-size:14px;line-height:1.45;color:#5f6b76;margin-bottom:18px;">
+        Choose how you want to share this handover PDF.
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button type="button" id="shareEmail">Email</button>
+        <button type="button" id="shareWhatsApp">WhatsApp</button>
+        <button type="button" id="shareSystem">Other apps</button>
+        <button type="button" id="shareCancel">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  dialog.querySelector('#shareCancel').onclick = () => dialog.close();
+
+  const runShare = target => {
+    dialog.close();
+    setTimeout(() => sharePdfToDevice(record, target), 0);
+  };
+
+  dialog.querySelector('#shareEmail').onclick = () => runShare('email');
+  dialog.querySelector('#shareWhatsApp').onclick = () => runShare('whatsapp');
+  dialog.querySelector('#shareSystem').onclick = () => runShare('other');
+
+  if (!dialog.open) dialog.showModal();
+}
+
 
 
 // ============================================================
@@ -2193,6 +2301,9 @@ function renderPendingPhotoPreviews() {
     img.style.objectFit = 'cover';
     img.style.borderRadius = '6px';
     img.style.border = '2px solid #1976d2';
+    img.style.cursor = 'pointer';
+    img.title = 'Click to view photo';
+    img.onclick = () => openPhotoViewer(img.src);
 
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -2867,48 +2978,121 @@ function openPhotoViewer(url) {
       if (e.target === dialog) dialog.close();
     });
 
-    // Zoom the photo itself rather than allowing the browser to zoom the page.
     const image = dialog.querySelector('.photo-viewer-image');
-    const state = { scale: 1, pointers: new Map(), pinchDistance: 0, pinchScale: 1 };
+    const inner = dialog.querySelector('.photo-viewer-inner');
+    const state = {
+      scale: 1,
+      x: 0,
+      y: 0,
+      pointers: new Map(),
+      pinchDistance: 0,
+      pinchScale: 1,
+      pinchStartX: 0,
+      pinchStartY: 0,
+      pinchStartMidX: 0,
+      pinchStartMidY: 0,
+      dragging: false,
+      dragPointerId: null,
+      dragLastX: 0,
+      dragLastY: 0,
+      baseWidth: 0,
+      baseHeight: 0
+    };
 
-    const applyZoom = () => {
-      const scale = Math.max(1, Math.min(5, state.scale));
-      state.scale = scale;
-      image.style.transform = `translate3d(0, 0, 0) scale(${scale})`;
+    const getBounds = () => {
+      const innerRect = inner.getBoundingClientRect();
+      const maxX = Math.max(0, (state.baseWidth * state.scale - innerRect.width) / 2);
+      const maxY = Math.max(0, (state.baseHeight * state.scale - innerRect.height) / 2);
+      return { maxX, maxY };
+    };
+
+    const clampPosition = () => {
+      const { maxX, maxY } = getBounds();
+      state.x = Math.max(-maxX, Math.min(maxX, state.x));
+      state.y = Math.max(-maxY, Math.min(maxY, state.y));
+    };
+
+    const applyTransform = () => {
+      state.scale = Math.max(1, Math.min(5, state.scale));
+      clampPosition();
+      image.style.transform = `translate3d(${state.x}px, ${state.y}px, 0) scale(${state.scale})`;
+      image.style.cursor = state.scale > 1 ? 'grab' : 'default';
+    };
+
+    const measureBaseImage = () => {
+      const rect = image.getBoundingClientRect();
+      state.baseWidth = rect.width / Math.max(1, state.scale);
+      state.baseHeight = rect.height / Math.max(1, state.scale);
+      applyTransform();
     };
 
     const distance = (a, b) =>
       Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 
+    const midpoint = (a, b) => ({
+      x: (a.clientX + b.clientX) / 2,
+      y: (a.clientY + b.clientY) / 2
+    });
+
     image.addEventListener('pointerdown', e => {
       e.preventDefault();
       image.setPointerCapture?.(e.pointerId);
-      state.pointers.set(e.pointerId, e);
+      state.pointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
       if (state.pointers.size === 2) {
         const pts = [...state.pointers.values()];
+        const mid = midpoint(pts[0], pts[1]);
         state.pinchDistance = distance(pts[0], pts[1]);
         state.pinchScale = state.scale;
+        state.pinchStartX = state.x;
+        state.pinchStartY = state.y;
+        state.pinchStartMidX = mid.x;
+        state.pinchStartMidY = mid.y;
+        state.dragging = false;
+      } else if (state.scale > 1) {
+        state.dragging = true;
+        state.dragPointerId = e.pointerId;
+        state.dragLastX = e.clientX;
+        state.dragLastY = e.clientY;
+        image.style.cursor = 'grabbing';
       }
     });
 
     image.addEventListener('pointermove', e => {
       if (!state.pointers.has(e.pointerId)) return;
       e.preventDefault();
-      state.pointers.set(e.pointerId, e);
+      state.pointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
       if (state.pointers.size === 2 && state.pinchDistance > 0) {
         const pts = [...state.pointers.values()];
         const ratio = distance(pts[0], pts[1]) / state.pinchDistance;
         state.scale = state.pinchScale * ratio;
-        applyZoom();
+        const mid = midpoint(pts[0], pts[1]);
+        state.x = state.pinchStartX + (mid.x - state.pinchStartMidX);
+        state.y = state.pinchStartY + (mid.y - state.pinchStartMidY);
+        applyTransform();
+        return;
+      }
+
+      if (state.dragging && state.dragPointerId === e.pointerId && state.scale > 1) {
+        state.x += e.clientX - state.dragLastX;
+        state.y += e.clientY - state.dragLastY;
+        state.dragLastX = e.clientX;
+        state.dragLastY = e.clientY;
+        applyTransform();
       }
     });
 
     const releasePointer = e => {
       state.pointers.delete(e.pointerId);
-      if (state.pointers.size < 2) {
-        state.pinchDistance = 0;
+      if (state.pointers.size < 2) state.pinchDistance = 0;
+      if (state.dragPointerId === e.pointerId) {
+        state.dragging = false;
+        state.dragPointerId = null;
+        image.style.cursor = state.scale > 1 ? 'grab' : 'default';
       }
     };
+
     image.addEventListener('pointerup', releasePointer);
     image.addEventListener('pointercancel', releasePointer);
     image.addEventListener('pointerleave', e => {
@@ -2917,14 +3101,31 @@ function openPhotoViewer(url) {
 
     image.addEventListener('wheel', e => {
       e.preventDefault();
-      state.scale += e.deltaY < 0 ? 0.25 : -0.25;
-      applyZoom();
+      const oldScale = state.scale;
+      const nextScale = Math.max(1, Math.min(5, oldScale + (e.deltaY < 0 ? 0.25 : -0.25)));
+      if (nextScale === oldScale) return;
+      state.scale = nextScale;
+      if (state.scale === 1) {
+        state.x = 0;
+        state.y = 0;
+      }
+      applyTransform();
     }, { passive: false });
+
+    image.addEventListener('load', () => {
+      state.scale = 1;
+      state.x = 0;
+      state.y = 0;
+      requestAnimationFrame(measureBaseImage);
+    });
 
     dialog.addEventListener('close', () => {
       state.scale = 1;
+      state.x = 0;
+      state.y = 0;
       state.pointers.clear();
       state.pinchDistance = 0;
+      state.dragging = false;
       image.style.transform = 'translate3d(0, 0, 0) scale(1)';
     });
   }
@@ -2943,10 +3144,9 @@ function openPhotoViewer(url) {
     dialog.dataset.lockWired = '1';
   }
 
-  if (!dialog.open) {
-    dialog.showModal();
-  }
+  if (!dialog.open) dialog.showModal();
 }
+
 
 
 // ============================================================
