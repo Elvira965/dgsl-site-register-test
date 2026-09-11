@@ -520,7 +520,7 @@ async function openBugReportsDialog() {
         style="display:block; width:100%; text-align:left; border:1px solid #d9e1ea; border-radius:12px; background:#fff; padding:14px 16px; margin:0 0 10px; cursor:pointer;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
           <strong>${bugReportEscape(item.name)}</strong>
-          ${!item.is_read ? '<span data-bug-report-new style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW</span>' : ''}
+          ${!item.is_read ? '<span data-bug-report-new style="flex:none; background:#2f80ed; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW</span>' : ''}
         </div>
         <div style="font-size:.9em; opacity:.8; margin-bottom:7px;">
           ${bugReportEscape(formatBugReportDate(item.created_at))} · Version ${bugReportEscape(item.website_version || '')}
