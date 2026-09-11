@@ -203,7 +203,7 @@ function updateBugReportsBadge(unreadCount) {
   const badge = document.getElementById('bugReportsBadge');
   if (!button || !badge) return;
   const count = Number(unreadCount) || 0;
-  badge.textContent = count > 0 ? String(count) : '';
+  badge.textContent = count > 99 ? '99+' : (count > 0 ? String(count) : '');
   badge.className = 'notification-badge bug-reports-badge';
   badge.style.display = count > 0 ? 'inline-flex' : 'none';
 }

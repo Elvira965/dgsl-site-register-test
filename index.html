@@ -199,26 +199,25 @@
       <section class="changelog-entry current">
         <div class="changelog-version">1.2.8 <span class="changelog-current">Current</span></div>
         <ul>
-          <li>Added live Supabase updates so saved handover changes can appear across connected devices without a manual refresh.</li>
-          <li>Added live updates for Bug Reports and website notifications, with a short fallback refresh while the site is open.</li>
-          <li>Improved Bug Reports with unread NEW labels and an unread counter in Settings.</li>
-          <li>Improved Bug Report detail handling so opening a NEW report marks it as read immediately.</li>
-          <li>Added Bug Report deletion with a confirmation step and immediate list refresh.</li>
+          <li>Added live Supabase updates so saved handover changes appear across connected devices without a manual refresh.</li>
+          <li>Added live updates for Bug Reports and website notifications, plus a short fallback refresh while the site is open.</li>
+          <li>Improved Bug Reports with unread NEW labels, a live unread counter and read-on-open behaviour.</li>
+          <li>Added Bug Report deletion with confirmation and immediate list refresh.</li>
           <li>Improved logged-out row actions with View PDF and More, including Download PDF and Share.</li>
           <li>Improved logged-in row actions with Edit, View PDF, More, Copy and Share.</li>
-          <li>Improved photo zoom and panning, handover copying, status handling and responsive form behaviour.</li>
-          <li>Added dashboard summary icons and continued refinements to the desktop, tablet and phone layouts.</li>
+          <li>Improved photo zoom/panning, handover copying, status handling and responsive form behaviour.</li>
+          <li>Added dashboard summary icons and continued desktop, tablet and phone layout refinements.</li>
         </ul>
       </section>
 
       <section class="changelog-entry">
         <div class="changelog-version">1.2.7</div>
         <ul>
-          <li>Introduced the Bug Reports feature with a dedicated Bug Reports list and Bug Report detail view.</li>
-          <li>Added the Bug Report form with reporter name, what they were trying to do, report details, website version and page information.</li>
+          <li>Introduced the Bug Reports feature and Bug Reports list/detail views.</li>
+          <li>Added the Bug Report form with reporter name, task, report details, website version and page information.</li>
           <li>Added unread tracking so new reports can be identified and opening a report marks it as read.</li>
-          <li>Added the Bug Reports option to Settings with an unread counter.</li>
-          <li>Added the Change Log presentation and the current-version overview used by the site.</li>
+          <li>Added Bug Reports to Settings with an unread counter.</li>
+          <li>Added the Change Log presentation and current-version overview.</li>
           <li>Continued improvements to handover rows, PDF viewing, copying, sharing and mobile/tablet usability.</li>
         </ul>
       </section>
@@ -226,21 +225,90 @@
       <section class="changelog-entry">
         <div class="changelog-version">1.2.6</div>
         <ul>
-          <li>Continued development of the DGSL Site Register around Supabase for shared handover data and site photos.</li>
-          <li>Expanded the handover form and Take Back information, including notes, housekeeping, snagging and checklist information.</li>
-          <li>Improved signatures, site-photo handling and PDF generation.</li>
-          <li>Improved status handling and the register summary totals.</li>
-          <li>Continued responsive layout improvements for computer, tablet and phone.</li>
+          <li>Added the Settings and Notifications area to the signed-in site header.</li>
+          <li>Added site-update notifications and the notification badge behaviour.</li>
+          <li>Added the Change Log window and version bar.</li>
+          <li>Added and refined header icons and their responsive positioning.</li>
+          <li>Continued mobile and tablet layout refinements.</li>
         </ul>
       </section>
 
       <section class="changelog-entry">
-        <div class="changelog-version">Earlier versions</div>
+        <div class="changelog-version">1.2.5</div>
         <ul>
-          <li>Built the original DGSL Site Register and core handover workflow.</li>
-          <li>Added Supabase database storage, authentication and site-photo storage.</li>
-          <li>Added search, filtering, PDF generation, PDF download and backup export/import.</li>
-          <li>Added handover and Take Back details, signatures, notes and supporting site information.</li>
+          <li>Refined the signed-in experience and editing controls for the TEST site.</li>
+          <li>Improved login, logout and edit visibility behaviour across the register.</li>
+          <li>Continued improvements to the handover form and responsive layout.</li>
+          <li>Refined PDF generation and viewing, including records containing multiple photos.</li>
+          <li>Improved photo removal and saved-photo handling while editing.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">1.2.4</div>
+        <ul>
+          <li>Improved the in-page PDF viewer and View action for handovers.</li>
+          <li>Improved whole-row interaction and the row action popup.</li>
+          <li>Improved PDF layout and the handling of handover photos.</li>
+          <li>Improved multiple-photo support in generated PDFs.</li>
+          <li>Continued responsive improvements for phones, tablets and computers.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">1.2.3</div>
+        <ul>
+          <li>Added and refined the dedicated handover View/PDF experience.</li>
+          <li>Improved row clicking so a handover can be selected reliably on touch devices.</li>
+          <li>Improved photo viewing and the handover photo presentation.</li>
+          <li>Continued refinements to copying, sorting and the register actions.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">1.2.2</div>
+        <ul>
+          <li>Continued development of the shared TEST Site Register and its Supabase-backed handover data.</li>
+          <li>Refined mobile layout and restored the intended register behaviour on smaller screens.</li>
+          <li>Improved handover photo viewing, sorting and copying workflows.</li>
+          <li>Continued improvements to signatures, PDFs and the Take Back information.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">1.2.1</div>
+        <ul>
+          <li>Refined the handover register following the 1.2.0 feature work.</li>
+          <li>Continued the improvements to handover copying and the red copied-handover indicator.</li>
+          <li>Continued newest-first Handover Date sorting.</li>
+          <li>Continued photo viewing, photo zoom, PDF, signatures and Take Back improvements.</li>
+          <li>Continued status colours, dashboard totals and weekly-change information.</li>
+          <li>Improved mobile and tablet usability, including signature pads and date fields.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">1.2.0</div>
+        <ul>
+          <li>Improved handover copying, including clear red marking for copied handovers until they are edited and saved.</li>
+          <li>Changed handover ordering to Handover Date, newest first.</li>
+          <li>Added photo viewing with an in-page viewer and photo zoom without opening a new tab.</li>
+          <li>Improved the PDF viewer, signatures, site photos and Take Back details.</li>
+          <li>Improved status handling with Open, Closed and On Hold colours.</li>
+          <li>Added dashboard totals and weekly changes.</li>
+          <li>Improved mobile and tablet usability, including safer signature pads and clearer date fields.</li>
+        </ul>
+      </section>
+
+      <section class="changelog-entry">
+        <div class="changelog-version">Earlier development</div>
+        <ul>
+          <li>Built the DGSL Site Register around Supabase for storing handovers and site photos.</li>
+          <li>Added secure login and restricted editing, creating and deleting to authorised users.</li>
+          <li>Added search, status filters, PDF generation, PDF download and data export/import.</li>
+          <li>Added Handover and Take Back information, housekeeping, notes and signatures.</li>
+          <li>Added site-photo upload, removal and PDF photo inclusion.</li>
+          <li>Added copy, edit and view actions for individual handovers.</li>
           <li>Continued improving the layout and behaviour across computer, tablet and phone.</li>
         </ul>
       </section>
