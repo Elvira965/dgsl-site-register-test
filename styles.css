@@ -1714,7 +1714,6 @@ body.change-log-open {
    It is only shown by app.js when unread/new reports exist. */
 #settingsBugReports .bug-reports-badge {
   position: static !important;
-  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   vertical-align: middle !important;
@@ -1735,6 +1734,9 @@ body.change-log-open {
 }
 #settingsBugReports .bug-reports-badge[style*="display: none"] {
   display: none !important;
+}
+#settingsBugReports .bug-reports-badge[style*="display: inline-flex"] {
+  display: inline-flex !important;
 }
 .changelog-list { display: grid; gap: 14px; }
 .changelog-entry { margin: 0 !important; }
