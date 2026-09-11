@@ -21,7 +21,7 @@ let records = [];
 let editing = null;
 let filter = 'All';
 
-const SITE_VERSION = '1.2.8';
+const SITE_VERSION = '1.2.7';
 const NOTIFICATIONS_TABLE = 'site_notifications_test';
 const NOTIFICATIONS_SEEN_KEY = 'dgsl_site_register_test_notifications_seen_v1';
 
@@ -263,8 +263,12 @@ function openBugReportDialog() {
     document.body.appendChild(dialog);
     dialog.querySelector('#closeBugReport').onclick = () => dialog.close();
     dialog.querySelector('#submitBugReport').onclick = submitBugReport;
+    dialog.addEventListener('close', () => {
+      document.body.classList.remove('form-dialog-open');
+    });
   }
   dialog.querySelector('#bugReportStatus').textContent = '';
+  document.body.classList.add('form-dialog-open');
   if (!dialog.open) dialog.showModal();
 }
 
@@ -362,10 +366,41 @@ async function openBugReportDetail(item, parentDialog) {
           <button type="button" class="icon" id="closeBugReportDetail" aria-label="Close">×</button>
         </div>
         <div id="bugReportDetailContent" class="settings-form"></div>
+        <div style="padding:0 22px 22px;">
+          <button type="button" id="deleteBugReport" class="danger" style="background:#c62828 !important; color:#fff !important; border-color:#c62828 !important; width:100%;">Delete Bug Report</button>
+        </div>
       </div>
     `;
 
     document.body.appendChild(detail);
+
+    detail.querySelector('#deleteBugReport').onclick = async () => {
+      if (!item?.id || !supabaseClient) return;
+      if (!confirm('Delete this bug report? This cannot be undone.')) return;
+
+      const deleteButton = detail.querySelector('#deleteBugReport');
+      deleteButton.disabled = true;
+      deleteButton.textContent = 'Deleting...';
+
+      try {
+        const { error } = await supabaseClient
+          .from(BUG_REPORTS_TABLE)
+          .delete()
+          .eq('id', item.id);
+        if (error) throw error;
+
+        if (detail.open) detail.close();
+        if (parentDialog?.open) {
+          await openBugReportsDialog();
+        }
+        refreshBugReportsBadge();
+      } catch (error) {
+        console.error('Bug report delete error:', error);
+        alert('Unable to delete this bug report. Please check the Supabase DELETE policy.');
+        deleteButton.disabled = false;
+        deleteButton.textContent = 'Delete Bug Report';
+      }
+    };
 
     detail.querySelector('#closeBugReportDetail').onclick = () => {
       if (detail.open) detail.close();
