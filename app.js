@@ -221,7 +221,7 @@ async function loadSiteNotifications() {
       .from(NOTIFICATIONS_TABLE)
       .select('id,version,title,message,created_at')
       .order('created_at', { ascending: false })
-      .limit(25);
+      .limit(1);
 
     if (error) throw error;
 
@@ -1538,7 +1538,9 @@ async function sharePdfToDevice(record) {
 
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       await navigator.share({
-        files: [file]
+        files: [file],
+        title: `DGSL Handover - ${record.zone || 'Handover'}`,
+        text: 'DGSL Handover PDF'
       });
       return;
     }
