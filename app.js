@@ -184,7 +184,7 @@ function openSettingsDialog() {
 
 
 const BUG_REPORT_ADMIN_EMAIL = 'elvira@dgsl.ie';
-const BUG_REPORT_ADMIN_PIN = '165610';
+const BUG_REPORT_ADMIN_PIN = 'CHANGE_THIS_PIN';
 const BUG_REPORTS_TABLE = 'bug_reports_test';
 
 function isBugReportAdmin() {
