@@ -1410,14 +1410,12 @@ function showRowActionDialog(id) {
 
   dialog.innerHTML = `
     <div style="padding:22px;text-align:center;box-sizing:border-box;">
-      <div style="position:relative;min-height:38px;margin-bottom:12px;">
-        <div style="font-size:18px;font-weight:700;padding:6px 58px 6px 58px;">What would you like to do?</div>
-        ${currentUser ? '<button type="button" id="rowActionMore" style="position:absolute;top:0;right:0;">More</button>' : ''}
-      </div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <div style="font-size:18px;font-weight:700;padding:6px 0 18px;">What would you like to do?</div>
+      <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
         ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button>' : ''}
+        ${currentUser ? '<button type="button" id="rowActionMore">More</button>' : ''}
       </div>
       <div style="margin-top:18px;">
         <button type="button" id="rowActionCancel">Cancel</button>
