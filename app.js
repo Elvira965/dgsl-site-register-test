@@ -186,7 +186,7 @@ function openSettingsDialog() {
 
 
 const BUG_REPORT_ADMIN_EMAIL = 'elvira@dgsl.ie';
-const BUG_REPORT_ADMIN_PIN = 'admin26';
+const BUG_REPORT_ADMIN_PIN = 'CHANGE_THIS_PIN';
 const BUG_REPORTS_TABLE = 'bug_reports_test';
 
 function isBugReportAdmin() {
@@ -392,11 +392,15 @@ async function openBugReportsDialog() {
     dialog = document.createElement('dialog');
     dialog.id = 'dgslBugReportsDialog';
     dialog.className = 'header-settings-dialog';
-    dialog.style.width = 'min(900px, calc(100vw - 32px))';
-    dialog.style.maxWidth = 'calc(100vw - 32px)';
-    dialog.style.maxHeight = 'calc(100vh - 32px)';
+    dialog.style.width = '100vw';
+    dialog.style.maxWidth = 'none';
+    dialog.style.height = '100vh';
+    dialog.style.maxHeight = 'none';
+    dialog.style.margin = '0';
+    dialog.style.borderRadius = '0';
+    dialog.style.inset = '0';
     dialog.innerHTML = `
-      <div class="header-dialog-inner" style="max-height:calc(100vh - 64px); overflow:auto;">
+      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:auto; box-sizing:border-box; padding:24px 28px 32px;">
         <div class="header-dialog-head">
           <div>
             <p class="eyebrow">DGSL SITE REGISTER</p>
