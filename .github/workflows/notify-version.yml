@@ -39,7 +39,6 @@ jobs:
           fi
 
           CURRENT_VERSION=$(grep -oE "const SITE_VERSION = '[0-9]+\.[0-9]+\.[0-9]+'" app.js | head -1 | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
-
           PREVIOUS_VERSION=$(git show HEAD^:app.js 2>/dev/null | grep -oE "const SITE_VERSION = '[0-9]+\.[0-9]+\.[0-9]+'" | head -1 | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
 
           echo "Current version: $CURRENT_VERSION"
