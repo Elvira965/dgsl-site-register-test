@@ -1538,9 +1538,7 @@ async function sharePdfToDevice(record) {
 
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       await navigator.share({
-        files: [file],
-        title: `DGSL Handover - ${record.zone || 'Handover'}`,
-        text: 'DGSL Handover PDF'
+        files: [file]
       });
       return;
     }
