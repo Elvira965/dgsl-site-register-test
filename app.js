@@ -105,6 +105,8 @@ function updateAuthUi() {
   if (newButton) newButton.style.display = currentUser ? '' : 'none';
   if (notificationsButton) notificationsButton.style.display = currentUser ? '' : 'none';
   if (settingsButton) settingsButton.style.display = currentUser ? '' : 'none';
+  const bugReportsButton = document.getElementById('settingsBugReports');
+  if (bugReportsButton) bugReportsButton.style.display = isBugReportAdmin() ? '' : 'none';
 
   const editHeader = document.getElementById('editHeader');
   if (editHeader) editHeader.style.display = currentUser ? '' : 'none';
@@ -151,6 +153,8 @@ function openSettingsDialog() {
         </div>
         <div class="settings-options">
           <button type="button" id="settingsChangeLog" class="settings-option">Change Log</button>
+          <button type="button" id="settingsBugReport" class="settings-option">Report a Bug</button>
+          <button type="button" id="settingsBugReports" class="settings-option" style="display:none;">Bug Reports</button>
           <button type="button" id="settingsLogout" class="settings-option settings-logout">Log out</button>
         </div>
       </div>
@@ -162,12 +166,180 @@ function openSettingsDialog() {
       dialog.close();
       openChangeLogDialog();
     };
+    dialog.querySelector('#settingsBugReport').onclick = () => {
+      dialog.close();
+      openBugReportDialog();
+    };
+    dialog.querySelector('#settingsBugReports').onclick = () => {
+      dialog.close();
+      openBugReportsDialog();
+    };
     dialog.querySelector('#settingsLogout').onclick = () => {
       dialog.close();
       showLogoutConfirmDialog();
     };
   }
   if (!dialog.open) dialog.showModal();
+}
+
+
+const BUG_REPORT_ADMIN_EMAIL = 'elvira@dgsl.ie';
+const BUG_REPORT_ADMIN_PIN = 'CHANGE_THIS_PIN';
+const BUG_REPORTS_TABLE = 'bug_reports_test';
+
+function isBugReportAdmin() {
+  return !!currentUser && String(currentUser.email || '').toLowerCase() === BUG_REPORT_ADMIN_EMAIL;
+}
+
+function bugReportEscape(value) {
+  return String(value ?? '').replace(/[&<>"]/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+  }[char]));
+}
+
+function openBugReportDialog() {
+  let dialog = document.getElementById('dgslBugReportDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslBugReportDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head">
+          <div>
+            <p class="eyebrow">DGSL SITE REGISTER</p>
+            <h2>Report a Bug</h2>
+          </div>
+          <button type="button" class="icon" id="closeBugReport" aria-label="Close">×</button>
+        </div>
+        <div class="settings-form">
+          <label for="bugReportName">Your name</label>
+          <input id="bugReportName" type="text" autocomplete="name" maxlength="120">
+          <label for="bugReportTask">What were you trying to do?</label>
+          <textarea id="bugReportTask" rows="3" maxlength="2000"></textarea>
+          <label for="bugReportDescription">What went wrong / what would you like to report?</label>
+          <textarea id="bugReportDescription" rows="5" maxlength="5000"></textarea>
+          <p id="bugReportStatus" class="form-status" aria-live="polite"></p>
+          <button type="button" id="submitBugReport" class="primary">Submit</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+    dialog.querySelector('#closeBugReport').onclick = () => dialog.close();
+    dialog.querySelector('#submitBugReport').onclick = submitBugReport;
+  }
+  dialog.querySelector('#bugReportStatus').textContent = '';
+  if (!dialog.open) dialog.showModal();
+}
+
+async function submitBugReport() {
+  const dialog = document.getElementById('dgslBugReportDialog');
+  if (!dialog || !supabaseClient || !currentUser) return;
+
+  const name = dialog.querySelector('#bugReportName').value.trim();
+  const task = dialog.querySelector('#bugReportTask').value.trim();
+  const description = dialog.querySelector('#bugReportDescription').value.trim();
+  const status = dialog.querySelector('#bugReportStatus');
+  const button = dialog.querySelector('#submitBugReport');
+
+  if (!name || !task || !description) {
+    status.textContent = 'Please complete all three fields.';
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = 'Submitting...';
+
+  try {
+    const { error } = await supabaseClient.from(BUG_REPORTS_TABLE).insert({
+      name,
+      trying_to_do: task,
+      report: description,
+      website_version: SITE_VERSION,
+      page_url: window.location.href,
+      account_id: currentUser.id,
+      status: 'Open'
+    });
+    if (error) throw error;
+
+    dialog.querySelector('#bugReportName').value = '';
+    dialog.querySelector('#bugReportTask').value = '';
+    dialog.querySelector('#bugReportDescription').value = '';
+    status.textContent = 'Bug report submitted. Thank you.';
+    setTimeout(() => { if (dialog.open) dialog.close(); }, 900);
+  } catch (error) {
+    console.error('Bug report error:', error);
+    status.textContent = 'Unable to submit the bug report. Please try again.';
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function openBugReportsDialog() {
+  if (!isBugReportAdmin()) return;
+
+  const pin = window.prompt('Enter the admin PIN to view Bug Reports:');
+  if (pin === null) return;
+  if (BUG_REPORT_ADMIN_PIN === 'CHANGE_THIS_PIN') {
+    alert('Please set your admin PIN in app.js before using Bug Reports.');
+    return;
+  }
+  if (pin !== BUG_REPORT_ADMIN_PIN) {
+    alert('Incorrect PIN.');
+    return;
+  }
+
+  let dialog = document.getElementById('dgslBugReportsDialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'dgslBugReportsDialog';
+    dialog.className = 'header-settings-dialog';
+    dialog.innerHTML = `
+      <div class="header-dialog-inner">
+        <div class="header-dialog-head">
+          <div>
+            <p class="eyebrow">DGSL SITE REGISTER</p>
+            <h2>Bug Reports</h2>
+          </div>
+          <button type="button" class="icon" id="closeBugReports" aria-label="Close">×</button>
+        </div>
+        <div id="bugReportsList" class="settings-form"></div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+    dialog.querySelector('#closeBugReports').onclick = () => dialog.close();
+  }
+
+  const list = dialog.querySelector('#bugReportsList');
+  list.innerHTML = '<p>Loading reports...</p>';
+  if (!dialog.open) dialog.showModal();
+
+  try {
+    const { data, error } = await supabaseClient
+      .from(BUG_REPORTS_TABLE)
+      .select('id,name,trying_to_do,report,created_at,website_version,page_url,status')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    if (!data?.length) {
+      list.innerHTML = '<p>No bug reports have been submitted.</p>';
+      return;
+    }
+
+    list.innerHTML = data.map(item => `
+      <article class="site-notification-card">
+        <div class="site-notification-title">${bugReportEscape(item.name)}</div>
+        <div class="site-notification-version">${bugReportEscape(item.status || 'Open')} · Version ${bugReportEscape(item.website_version || '')}</div>
+        <div><strong>What they were trying to do</strong><br>${bugReportEscape(item.trying_to_do)}</div>
+        <div style="margin-top:8px"><strong>Report</strong><br>${bugReportEscape(item.report).replace(/\n/g, '<br>')}</div>
+        <div style="margin-top:8px;font-size:.9em">${bugReportEscape(new Date(item.created_at).toLocaleString())}</div>
+        ${item.page_url ? `<div style="margin-top:4px;font-size:.85em;overflow-wrap:anywhere">${bugReportEscape(item.page_url)}</div>` : ''}
+      </article>
+    `).join('');
+  } catch (error) {
+    console.error('Bug reports error:', error);
+    list.innerHTML = '<p>Unable to load bug reports. Please check the Supabase table and policies.</p>';
+  }
 }
 
 function getSeenNotificationIds() {
