@@ -205,7 +205,7 @@ function updateBugReportsBadge(unreadCount) {
   const count = Number(unreadCount) || 0;
   badge.textContent = count > 0 ? String(count) : '';
   badge.className = 'notification-badge bug-reports-badge';
-  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  badge.style.display = count > 0 ? 'inline-flex' : 'none';
 }
 
 async function refreshBugReportsBadge() {
