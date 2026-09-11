@@ -319,31 +319,41 @@ function formatBugReportDate(value) {
 }
 
 async function openBugReportDetail(item, parentDialog) {
-  // Opening a report marks it as read. The red NEW BUG marker and Settings badge then disappear.
   if (!item.is_read) {
     const { error } = await supabaseClient
       .from(BUG_REPORTS_TABLE)
-      .update({ is_read: true, status: 'Read' })
+      .update({ is_read: true })
       .eq('id', item.id);
+
     if (error) {
       console.error('Bug report read error:', error);
       alert('Unable to mark this bug report as read. Please try again.');
       return;
     }
+
     item.is_read = true;
-    item.status = 'Read';
     refreshBugReportsBadge();
   }
 
   let detail = document.getElementById('dgslBugReportDetailDialog');
+
   if (!detail) {
     detail = document.createElement('dialog');
     detail.id = 'dgslBugReportDetailDialog';
     detail.className = 'header-settings-dialog';
-    detail.style.width = 'min(760px, calc(100vw - 32px))';
-    detail.style.maxWidth = 'calc(100vw - 32px)';
+
+    detail.style.setProperty('width', 'min(950px, 94vw)', 'important');
+    detail.style.setProperty('max-width', '950px', 'important');
+    detail.style.setProperty('height', '82vh', 'important');
+    detail.style.setProperty('max-height', '82vh', 'important');
+    detail.style.setProperty('min-height', '0', 'important');
+    detail.style.setProperty('padding', '0', 'important');
+    detail.style.setProperty('overflow', 'hidden', 'important');
+    detail.style.setProperty('box-sizing', 'border-box', 'important');
+    detail.style.setProperty('margin', 'auto', 'important');
+
     detail.innerHTML = `
-      <div class="header-dialog-inner">
+      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:auto; box-sizing:border-box;">
         <div class="header-dialog-head">
           <div>
             <p class="eyebrow">DGSL SITE REGISTER</p>
@@ -354,14 +364,29 @@ async function openBugReportDetail(item, parentDialog) {
         <div id="bugReportDetailContent" class="settings-form"></div>
       </div>
     `;
+
     document.body.appendChild(detail);
-    detail.querySelector('#closeBugReportDetail').onclick = () => detail.close();
+
+    detail.querySelector('#closeBugReportDetail').onclick = () => {
+      if (detail.open) detail.close();
+      if (parentDialog?.open) {
+        document.body.classList.add('form-dialog-open');
+      }
+    };
+
+    detail.addEventListener('close', () => {
+      if (parentDialog?.open) {
+        document.body.classList.add('form-dialog-open');
+      } else {
+        document.body.classList.remove('form-dialog-open');
+      }
+    });
   }
 
   const content = detail.querySelector('#bugReportDetailContent');
+
   content.innerHTML = `
     <div style="font-size:.95em; margin-bottom:14px;"><strong>${bugReportEscape(item.name)}</strong></div>
-    <div style="margin-bottom:14px;"><strong>Status</strong><br>${bugReportEscape(item.status || 'Read')}</div>
     <div style="margin-bottom:14px;"><strong>What they were trying to do</strong><br>${bugReportEscape(item.trying_to_do).replace(/\n/g, '<br>')}</div>
     <div style="margin-bottom:14px;"><strong>Report</strong><br>${bugReportEscape(item.report).replace(/\n/g, '<br>')}</div>
     <div style="margin-bottom:14px;"><strong>Date / time</strong><br>${bugReportEscape(formatBugReportDate(item.created_at))}</div>
@@ -369,38 +394,44 @@ async function openBugReportDetail(item, parentDialog) {
     ${item.page_url ? `<div style="margin-bottom:14px;"><strong>Page</strong><br><span style="overflow-wrap:anywhere">${bugReportEscape(item.page_url)}</span></div>` : ''}
   `;
 
-  if (parentDialog?.open) parentDialog.close();
   if (!detail.open) detail.showModal();
 }
 
 async function openBugReportsDialog() {
   if (!isBugReportAdmin()) return;
 
-  const pin = window.prompt('Enter the admin PIN to view Bug Reports:');
+  const pin = window.prompt('Enter the admin PASSWORD to view Bug Reports:');
   if (pin === null) return;
+
   if (BUG_REPORT_ADMIN_PIN === 'CHANGE_THIS_PIN') {
-    alert('Please set your admin PIN in app.js before using Bug Reports.');
+    alert('Please set your admin PASSWORD in app.js before using Bug Reports.');
     return;
   }
+
   if (pin !== BUG_REPORT_ADMIN_PIN) {
-    alert('Incorrect PIN.');
+    alert('Incorrect PASSWORD.');
     return;
   }
 
   let dialog = document.getElementById('dgslBugReportsDialog');
+
   if (!dialog) {
     dialog = document.createElement('dialog');
     dialog.id = 'dgslBugReportsDialog';
     dialog.className = 'header-settings-dialog';
-    dialog.style.width = '100vw';
-    dialog.style.maxWidth = 'none';
-    dialog.style.height = '100vh';
-    dialog.style.maxHeight = 'none';
-    dialog.style.margin = '0';
-    dialog.style.borderRadius = '0';
-    dialog.style.inset = '0';
+
+    dialog.style.setProperty('width', 'min(950px, 94vw)', 'important');
+    dialog.style.setProperty('max-width', '950px', 'important');
+    dialog.style.setProperty('height', '82vh', 'important');
+    dialog.style.setProperty('max-height', '82vh', 'important');
+    dialog.style.setProperty('min-height', '0', 'important');
+    dialog.style.setProperty('padding', '0', 'important');
+    dialog.style.setProperty('overflow', 'hidden', 'important');
+    dialog.style.setProperty('box-sizing', 'border-box', 'important');
+    dialog.style.setProperty('margin', 'auto', 'important');
+
     dialog.innerHTML = `
-      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:auto; box-sizing:border-box; padding:24px 28px 32px;">
+      <div class="header-dialog-inner" style="height:100%; max-height:none; overflow:auto; box-sizing:border-box;">
         <div class="header-dialog-head">
           <div>
             <p class="eyebrow">DGSL SITE REGISTER</p>
@@ -411,19 +442,32 @@ async function openBugReportsDialog() {
         <div id="bugReportsList" class="settings-form"></div>
       </div>
     `;
+
     document.body.appendChild(dialog);
-    dialog.querySelector('#closeBugReports').onclick = () => dialog.close();
+
+    dialog.querySelector('#closeBugReports').onclick = () => {
+      if (dialog.open) dialog.close();
+      document.body.classList.remove('form-dialog-open');
+    };
+
+    dialog.addEventListener('close', () => {
+      document.body.classList.remove('form-dialog-open');
+    });
   }
 
   const list = dialog.querySelector('#bugReportsList');
   list.innerHTML = '<p>Loading reports...</p>';
+
+  document.body.classList.add('form-dialog-open');
+
   if (!dialog.open) dialog.showModal();
 
   try {
     const { data, error } = await supabaseClient
       .from(BUG_REPORTS_TABLE)
-      .select('id,name,trying_to_do,report,created_at,website_version,page_url,status,is_read')
+      .select('id,name,trying_to_do,report,created_at,website_version,page_url,is_read')
       .order('created_at', { ascending: false });
+
     if (error) throw error;
 
     if (!data?.length) {
@@ -436,14 +480,18 @@ async function openBugReportsDialog() {
     updateBugReportsBadge(unreadCount);
 
     list.innerHTML = data.map((item, index) => `
-      <button type="button" class="bug-report-list-item" data-bug-report-index="${index}" style="display:block; width:100%; text-align:left; border:1px solid #d9e1ea; border-radius:12px; background:#fff; padding:14px 16px; margin:0 0 10px; cursor:pointer;">
+      <button type="button" class="bug-report-list-item" data-bug-report-index="${index}"
+        style="display:block; width:100%; text-align:left; border:1px solid #d9e1ea; border-radius:12px; background:#fff; padding:14px 16px; margin:0 0 10px; cursor:pointer;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
           <strong>${bugReportEscape(item.name)}</strong>
-          ${!item.is_read ? '<span style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW BUG</span>' : '<span style="font-size:.8em; opacity:.7;">Read</span>'}
+          ${!item.is_read ? '<span style="flex:none; background:#c62828; color:#fff; border-radius:999px; padding:3px 8px; font-size:.72em; font-weight:800;">NEW BUG</span>' : ''}
         </div>
-        <div style="font-size:.9em; opacity:.8; margin-bottom:7px;">${bugReportEscape(formatBugReportDate(item.created_at))} · Version ${bugReportEscape(item.website_version || '')}</div>
-        <div><strong>Trying to do:</strong> ${bugReportEscape(item.trying_to_do)}</div>
-        <div style="margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>Report:</strong> ${bugReportEscape(item.report)}</div>
+        <div style="font-size:.9em; opacity:.8; margin-bottom:7px;">
+          ${bugReportEscape(formatBugReportDate(item.created_at))} · Version ${bugReportEscape(item.website_version || '')}
+        </div>
+        <div style="margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          <strong>Report:</strong> ${bugReportEscape(item.report)}
+        </div>
       </button>
     `).join('');
 
