@@ -21,7 +21,7 @@ let records = [];
 let editing = null;
 let filter = 'All';
 
-const SITE_VERSION = '1.2.6';
+const SITE_VERSION = '1.2.7';
 const NOTIFICATIONS_TABLE = 'site_notifications_test';
 const NOTIFICATIONS_SEEN_KEY = 'dgsl_site_register_test_notifications_seen_v1';
 
@@ -358,7 +358,7 @@ function showLogoutConfirmDialog() {
           Are you sure you want to log out?
         </div>
         <div style="display:flex;gap:10px;justify-content:center;">
-          <button type="button" id="dgslLogoutCancel">Cancel</button>
+          <button type="button" id="dgslLogoutCancel" class="settings-cancel">Cancel</button>
           <button type="button" id="dgslLogoutConfirm" style="background:#008e39;color:#fff;border-color:#008e39;">Log out</button>
         </div>
       </div>
@@ -415,7 +415,7 @@ function showAuthDialog() {
           style="width:100%;box-sizing:border-box;margin-bottom:12px;">
         <div id="dgslAuthStatus" style="min-height:20px;margin-bottom:12px;font-size:14px;"></div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button type="button" id="dgslLoginCancel">Cancel</button>
+          <button type="button" id="dgslLoginCancel" class="settings-cancel">Cancel</button>
           <button type="button" id="dgslLoginSubmit" style="background:#008e39;color:#fff;border-color:#008e39;">Login</button>
         </div>
       </div>
@@ -1380,15 +1380,10 @@ function unlockPdfDialogBackground() {
 
 function showRowActionDialog(id) {
 
-  const record =
-    records.find(
-      x => String(x.id) === String(id)
-    );
-
+  const record = records.find(x => String(x.id) === String(id));
   if (!record) return;
 
-  let dialog =
-    document.getElementById('rowActionDialog');
+  let dialog = document.getElementById('rowActionDialog');
 
   if (!dialog) {
     dialog = document.createElement('dialog');
@@ -1415,21 +1410,22 @@ function showRowActionDialog(id) {
 
   dialog.innerHTML = `
     <div style="padding:22px;text-align:center;box-sizing:border-box;">
-      <div style="font-size:18px;font-weight:700;margin-bottom:18px;">
-        What would you like to do?
+      <div style="position:relative;min-height:38px;margin-bottom:12px;">
+        <div style="font-size:18px;font-weight:700;padding:6px 58px 6px 58px;">What would you like to do?</div>
+        ${currentUser ? '<button type="button" id="rowActionMore" style="position:absolute;top:0;right:0;">More</button>' : ''}
       </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         ${currentUser ? '<button type="button" id="rowActionEdit">Edit</button>' : ''}
         <button type="button" id="rowActionView">View PDF</button>
-        <button type="button" id="rowActionCancel">Cancel</button>
-        ${currentUser ? '<button type="button" id="rowActionMore">More</button>' : ''}
         ${!currentUser ? '<button type="button" id="rowActionDownload">Download PDF</button>' : ''}
+      </div>
+      <div style="margin-top:18px;">
+        <button type="button" id="rowActionCancel">Cancel</button>
       </div>
     </div>
   `;
 
   const close = () => dialog.close();
-
   document.getElementById('rowActionCancel').onclick = close;
 
   const editButton = document.getElementById('rowActionEdit');
@@ -1476,9 +1472,7 @@ function showRowActionDialog(id) {
     };
   }
 
-  if (!dialog.open) {
-    dialog.showModal();
-  }
+  if (!dialog.open) dialog.showModal();
 }
 
 function showRowMoreDialog(record) {
@@ -1501,25 +1495,27 @@ function showRowMoreDialog(record) {
 
   dialog.innerHTML = `
     <div style="padding:22px;text-align:center;box-sizing:border-box;">
-      <div style="font-size:18px;font-weight:700;margin-bottom:18px;">More options</div>
+      <div style="position:relative;min-height:38px;margin-bottom:12px;">
+        <div style="font-size:18px;font-weight:700;padding:6px 58px 6px 58px;">More options</div>
+      </div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button type="button" id="rowMoreCopy">Copy</button>
         <button type="button" id="rowMoreShare">Share</button>
+      </div>
+      <div style="margin-top:18px;">
         <button type="button" id="rowMoreCancel">Cancel</button>
       </div>
     </div>
   `;
 
   dialog.querySelector('#rowMoreCancel').onclick = () => dialog.close();
-
   dialog.querySelector('#rowMoreCopy').onclick = () => {
     dialog.close();
     setTimeout(() => showCopyConfirmDialog(record), 0);
   };
-
   dialog.querySelector('#rowMoreShare').onclick = () => {
     dialog.close();
-    setTimeout(() => showShareDialog(record), 0);
+    setTimeout(() => sharePdfToDevice(record), 0);
   };
 
   if (!dialog.open) dialog.showModal();
@@ -1528,20 +1524,16 @@ function showRowMoreDialog(record) {
 async function buildSharePdf(record) {
   open(record, false);
   const blob = await generatePdf(true);
-  if (!(blob instanceof Blob)) {
-    throw new Error('The PDF could not be created.');
-  }
+  if (!(blob instanceof Blob)) throw new Error('The PDF could not be created.');
   return blob;
 }
 
 function shareFileName(record) {
-  const safeZone = String(record.zone || 'Handover')
-    .replace(/[^a-z0-9-_ ]/gi, '')
-    .replace(/\s+/g, '-');
+  const safeZone = String(record.zone || 'Handover').replace(/[^a-z0-9-_ ]/gi, '').replace(/\s+/g, '-');
   return `DGSL-${safeZone || 'Handover'}-Handover-${today()}.pdf`;
 }
 
-async function sharePdfToDevice(record, preferredTarget = '') {
+async function sharePdfToDevice(record) {
   try {
     const blob = await buildSharePdf(record);
     const file = new File([blob], shareFileName(record), { type: 'application/pdf' });
@@ -1550,18 +1542,11 @@ async function sharePdfToDevice(record, preferredTarget = '') {
       await navigator.share({
         files: [file],
         title: `DGSL Handover - ${record.zone || 'Handover'}`,
-        text: preferredTarget === 'email'
-          ? 'DGSL Handover PDF'
-          : preferredTarget === 'whatsapp'
-            ? 'DGSL Handover PDF'
-            : 'DGSL Handover PDF'
+        text: 'DGSL Handover PDF'
       });
       return;
     }
 
-    // Desktop browsers without file sharing cannot attach a generated local
-    // PDF directly to email/WhatsApp from a static website. Download it so
-    // the user can attach it in the chosen app.
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -1570,68 +1555,13 @@ async function sharePdfToDevice(record, preferredTarget = '') {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-    if (preferredTarget === 'email') {
-      window.location.href = `mailto:?subject=${encodeURIComponent(file.name)}&body=${encodeURIComponent('The DGSL Handover PDF has been downloaded. Please attach the downloaded PDF to this email.')}`;
-    } else if (preferredTarget === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent('DGSL Handover PDF downloaded. Please attach the downloaded PDF.')}`, '_blank', 'noopener');
-    } else {
-      alert('The PDF has been downloaded. You can now share it using your preferred app.');
-    }
+    alert('The PDF has been downloaded. You can now share it using your preferred app.');
   } catch (error) {
     if (error?.name === 'AbortError') return;
     console.error('Share PDF error:', error);
     alert('Unable to share the PDF.');
   }
 }
-
-function showShareDialog(record) {
-  let dialog = document.getElementById('rowShareDialog');
-
-  if (!dialog) {
-    dialog = document.createElement('dialog');
-    dialog.id = 'rowShareDialog';
-    dialog.style.padding = '0';
-    dialog.style.border = '0';
-    dialog.style.borderRadius = '12px';
-    dialog.style.width = 'min(390px, calc(100vw - 32px))';
-    dialog.style.maxWidth = '390px';
-    dialog.style.boxSizing = 'border-box';
-    dialog.style.margin = 'auto';
-    dialog.style.overflow = 'hidden';
-    document.body.appendChild(dialog);
-  }
-
-  dialog.innerHTML = `
-    <div style="padding:22px;text-align:center;box-sizing:border-box;">
-      <div style="font-size:18px;font-weight:700;margin-bottom:10px;">Share PDF</div>
-      <div style="font-size:14px;line-height:1.45;color:#5f6b76;margin-bottom:18px;">
-        Choose how you want to share this handover PDF.
-      </div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <button type="button" id="shareEmail">Email</button>
-        <button type="button" id="shareWhatsApp">WhatsApp</button>
-        <button type="button" id="shareSystem">Other apps</button>
-        <button type="button" id="shareCancel">Cancel</button>
-      </div>
-    </div>
-  `;
-
-  dialog.querySelector('#shareCancel').onclick = () => dialog.close();
-
-  const runShare = target => {
-    dialog.close();
-    setTimeout(() => sharePdfToDevice(record, target), 0);
-  };
-
-  dialog.querySelector('#shareEmail').onclick = () => runShare('email');
-  dialog.querySelector('#shareWhatsApp').onclick = () => runShare('whatsapp');
-  dialog.querySelector('#shareSystem').onclick = () => runShare('other');
-
-  if (!dialog.open) dialog.showModal();
-}
-
-
 
 // ============================================================
 // CHECKLIST
@@ -2991,6 +2921,8 @@ function openPhotoViewer(url) {
       pinchStartY: 0,
       pinchStartMidX: 0,
       pinchStartMidY: 0,
+      pinchStartInnerLeft: 0,
+      pinchStartInnerTop: 0,
       dragging: false,
       dragPointerId: null,
       dragLastX: 0,
@@ -3048,6 +2980,9 @@ function openPhotoViewer(url) {
         state.pinchStartY = state.y;
         state.pinchStartMidX = mid.x;
         state.pinchStartMidY = mid.y;
+        const innerRect = inner.getBoundingClientRect();
+        state.pinchStartInnerLeft = innerRect.left;
+        state.pinchStartInnerTop = innerRect.top;
         state.dragging = false;
       } else if (state.scale > 1) {
         state.dragging = true;
@@ -3066,10 +3001,16 @@ function openPhotoViewer(url) {
       if (state.pointers.size === 2 && state.pinchDistance > 0) {
         const pts = [...state.pointers.values()];
         const ratio = distance(pts[0], pts[1]) / state.pinchDistance;
-        state.scale = state.pinchScale * ratio;
+        const oldScale = state.scale;
+        const nextScale = Math.max(1, Math.min(5, state.pinchScale * ratio));
         const mid = midpoint(pts[0], pts[1]);
-        state.x = state.pinchStartX + (mid.x - state.pinchStartMidX);
-        state.y = state.pinchStartY + (mid.y - state.pinchStartMidY);
+        const innerRect = inner.getBoundingClientRect();
+        const focalX = mid.x - (innerRect.left + innerRect.width / 2);
+        const focalY = mid.y - (innerRect.top + innerRect.height / 2);
+        const actualRatio = nextScale / Math.max(0.0001, oldScale);
+        state.x = focalX - (focalX - state.pinchStartX) * actualRatio;
+        state.y = focalY - (focalY - state.pinchStartY) * actualRatio;
+        state.scale = nextScale;
         applyTransform();
         return;
       }
@@ -3104,6 +3045,12 @@ function openPhotoViewer(url) {
       const oldScale = state.scale;
       const nextScale = Math.max(1, Math.min(5, oldScale + (e.deltaY < 0 ? 0.25 : -0.25)));
       if (nextScale === oldScale) return;
+      const innerRect = inner.getBoundingClientRect();
+      const focalX = e.clientX - (innerRect.left + innerRect.width / 2);
+      const focalY = e.clientY - (innerRect.top + innerRect.height / 2);
+      const ratio = nextScale / oldScale;
+      state.x = focalX - (focalX - state.x) * ratio;
+      state.y = focalY - (focalY - state.y) * ratio;
       state.scale = nextScale;
       if (state.scale === 1) {
         state.x = 0;
@@ -3111,6 +3058,26 @@ function openPhotoViewer(url) {
       }
       applyTransform();
     }, { passive: false });
+
+    image.addEventListener('dblclick', e => {
+      e.preventDefault();
+      const oldScale = state.scale;
+      const nextScale = oldScale >= 5 ? 1 : Math.min(5, oldScale * 2);
+      const innerRect = inner.getBoundingClientRect();
+      const focalX = e.clientX - (innerRect.left + innerRect.width / 2);
+      const focalY = e.clientY - (innerRect.top + innerRect.height / 2);
+      if (nextScale === 1) {
+        state.scale = 1;
+        state.x = 0;
+        state.y = 0;
+      } else {
+        const ratio = nextScale / oldScale;
+        state.x = focalX - (focalX - state.x) * ratio;
+        state.y = focalY - (focalY - state.y) * ratio;
+        state.scale = nextScale;
+      }
+      applyTransform();
+    });
 
     image.addEventListener('load', () => {
       state.scale = 1;

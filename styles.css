@@ -1599,3 +1599,13 @@ body.change-log-open {
   will-change: transform;
   touch-action: none !important;
 }
+
+.settings-cancel,
+#rowActionCancel,
+#rowMoreCancel,
+#copyConfirmCancel { color:#b42318 !important; border-color:#b42318 !important; background:#fff !important; }
+
+.settings-cancel:hover,
+#rowActionCancel:hover,
+#rowMoreCancel:hover,
+#copyConfirmCancel:hover { background:#fff1f1 !important; color:#b42318 !important; border-color:#b42318 !important; }
