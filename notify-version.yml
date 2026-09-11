@@ -1,0 +1,79 @@
+name: Create TEST version notification
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get current website version
+        id: current
+        shell: bash
+        run: |
+          CURRENT_VERSION=$(sed -n "s/^const SITE_VERSION = '\([^']*\)'.*/\1/p" app.js | head -1)
+
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "Could not find SITE_VERSION in app.js"
+            exit 1
+          fi
+
+          echo "Current website version: $CURRENT_VERSION"
+          echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether website version changed
+        id: version_check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: notification will be created for the current version."
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CURRENT_VERSION=$(sed -n "s/^const SITE_VERSION = '\([^']*\)'.*/\1/p" app.js | head -1)
+          PREVIOUS_VERSION=$(git show HEAD^:app.js 2>/dev/null | sed -n "s/^const SITE_VERSION = '\([^']*\)'.*/\1/p" | head -1)
+
+          echo "Current version:  $CURRENT_VERSION"
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          if [ -n "$PREVIOUS_VERSION" ] && [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "Website version changed."
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Website version did not change."
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create TEST notification
+        if: steps.version_check.outputs.version_changed == 'true'
+        env:
+          SUPABASE_URL: https://mgxbsxqgjxpdvdjsixqi.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          VERSION: ${{ steps.current.outputs.version }}
+        shell: bash
+        run: |
+          curl --fail-with-body \
+            -X POST \
+            "$SUPABASE_URL/rest/v1/site_notifications_test" \
+            -H "apikey: $SUPABASE_SECRET_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=ignore-duplicates,return=minimal" \
+            --data "$(jq -n \
+              --arg version "$VERSION" \
+              --arg title "Website updated" \
+              --arg message "A new version of the DGSL Site Register is available. Please refresh the website to load the latest version." \
+              '{version:$version,title:$title,message:$message}')"
