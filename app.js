@@ -21,7 +21,7 @@ let records = [];
 let editing = null;
 let filter = 'All';
 
-const SITE_VERSION = '1.2.2';
+const SITE_VERSION = '1.2.3';
 const NOTIFICATIONS_TABLE = 'site_notifications_test';
 const NOTIFICATIONS_SEEN_KEY = 'dgsl_site_register_test_notifications_seen_v1';
 
@@ -33,6 +33,7 @@ function applySiteVersion() {
 }
 
 applySiteVersion();
+document.addEventListener('DOMContentLoaded', applySiteVersion);
 
 const $ = s => document.querySelector(s);
 

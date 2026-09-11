@@ -24,7 +24,7 @@ jobs:
       - name: Get website version
         id: version
         run: |
-          VERSION=$(grep -oE "const SITE_VERSION = '[0-9]+\\.[0-9]+\\.[0-9]+'" app.js | head -1 | sed -E "s/.*'([0-9]+\\.[0-9]+\\.[0-9]+)'.*/\\1/")
+          VERSION=$(grep -oE "const SITE_VERSION = \'[0-9]+\\.[0-9]+\\.[0-9]+\'" app.js | head -1 | sed -E "s/.*\\'([0-9]+\\.[0-9]+\\.[0-9]+)\\'.*/\1/")
           if [ -z "$VERSION" ]; then
             echo "Could not find SITE_VERSION in app.js"
             exit 1
@@ -36,7 +36,16 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "version_changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff HEAD^ HEAD -- app.js | grep -qE "^[+-]const SITE_VERSION = '[0-9]+\\.[0-9]+\\.[0-9]+'"; then
+            exit 0
+          fi
+
+          CURRENT_VERSION=$(grep -oE "const SITE_VERSION = '[0-9]+\.[0-9]+\.[0-9]+'" app.js | head -1 | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
+          PREVIOUS_VERSION=$(git show HEAD^:app.js 2>/dev/null | grep -oE "const SITE_VERSION = '[0-9]+\.[0-9]+\.[0-9]+'" | head -1 | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
             echo "version_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "version_changed=false" >> "$GITHUB_OUTPUT"
